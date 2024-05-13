@@ -274,8 +274,9 @@ export const setupNeo = async () => {
 
 export const setupDataScience = async () => {
 
+    logger.info("Creating data scuence node similarity")
+
     CONNECTION_STRING = `bolt://${process.env.DOCKER_HOST}:7687`;
-    // CONNECTION_STRING = `neo4j+s://bb90f2dc.databases.neo4j.io`;
 
     driver = neo4j.driver(CONNECTION_STRING, neo4j.auth.basic(process.env.NEO4J_USER || '', process.env.NEO4J_PASSWORD || ''));
     const session = driver.session();
