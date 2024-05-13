@@ -60,7 +60,7 @@ const go = async () => {
 
 
   if (CREATE_DONATIONS) {
-    await createDonations();
+    await createDonations(Number(process.env.DONATIONS_FROM_YEAR));
     endAndPrintTiming(timingStart, 'created Donations');
   }
 
