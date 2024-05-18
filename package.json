@@ -12,6 +12,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@fast-csv/parse": "^5.0.0",
     "aws-sdk": "^2.1618.0",
     "fs": "^0.0.1-security",
     "neo4j-driver": "^5.20.0",

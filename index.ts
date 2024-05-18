@@ -1,4 +1,4 @@
-import { setupDataScience, setupNeo } from "./src/neoManager";
+import { setupDataScience, setupNeo, batchDelete } from "./src/neoManager";
 import { Mp } from "./src/models/mps";
 import { Division } from "./src/models/divisions";
 import { createParties } from "./src/nodeManager";
@@ -35,6 +35,8 @@ const sortMps = (a: Mp, b: Mp) => {
 const go = async () => {
 
   await setupNeo();
+
+  // await batchDelete();
 
   const allMps: Array<Mp> = [];
   const allDivisions: Array<Division> = [];

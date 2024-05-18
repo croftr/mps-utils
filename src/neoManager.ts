@@ -14,12 +14,12 @@ const runCypher = async (cypher: string, session: any) => {
     try {
         const result = await session.run(cypher);
         return result;
-    } catch (error:any) {
+    } catch (error: any) {
         if (error.code !== "Neo.ClientError.Schema.ConstraintValidationFailed" && error.code !== "Neo.ClientError.Schema.EquivalentSchemaRuleAlreadyExists") {
             logger.error(error);
             logger.error(cypher);
         }
-        
+
     }
 }
 
@@ -259,7 +259,8 @@ export const setupNeo = async () => {
         let result;
         // result = await runCypher(`CREATE CONSTRAINT relUnique FOR ()-[r:VOTED_FOR]-() REQUIRE (r.votedAye) IS UNIQUE`, session);
         result = await runCypher(`CREATE CONSTRAINT FOR (mp:Mp) REQUIRE mp.id IS UNIQUE`, session);
-        result = await runCypher(`CREATE CONSTRAINT FOR (donar:Donar) REQUIRE donar.donar IS UNIQUE`, session);
+        result = await runCypher(`CREATE CONSTRAINT FOR (donar:Organisation) REQUIRE donar.donar IS UNIQUE`, session);
+        result = await runCypher(`CREATE CONSTRAINT FOR (donar:Individual) REQUIRE donar.donar IS UNIQUE`, session);
         result = await runCypher(`CREATE CONSTRAINT FOR (party:Party) REQUIRE party.partyName IS UNIQUE`, session);
         // result = await runCypher(`CREATE CONSTRAINT voted_for_unique ON (mp:Mp)-[:VOTED_FOR]->(division:Division) REQUIRE (mp.id <> division.id)`, session);
     } catch (error) {
@@ -270,6 +271,41 @@ export const setupNeo = async () => {
 
     logger.debug('NEO setup complete');
 
+}
+
+export const batchDelete = async () => {
+
+    CONNECTION_STRING = `bolt://${process.env.DOCKER_HOST}:7687`;
+    const cypher = `
+    MATCH (n:Organisation)-[r:DONATED_TO]-(p:Party)
+    WITH n LIMIT 100
+    DETACH DELETE n
+    `
+
+    try {
+        driver = neo4j.driver(CONNECTION_STRING, neo4j.auth.basic(process.env.NEO4J_USER || '', process.env.NEO4J_PASSWORD || ''));
+        const session = driver.session();
+
+        let keepgoing = true;
+        while (keepgoing) {
+            const result = await session.run(cypher);
+            logger.info(` deleted ${result.summary.updateStatistics._stats.nodesDeleted} nodes and ${result.summary.updateStatistics._stats.relationshipsDeleted} relationships`);
+            if (result.summary.updateStatistics._stats.nodesDeleted === 0) {
+                keepgoing = false;
+            }            
+        }
+        logger.info("All Done!")
+        
+    } catch (error: any) {
+        if (error.code !== "Neo.ClientError.Schema.ConstraintValidationFailed" && error.code !== "Neo.ClientError.Schema.EquivalentSchemaRuleAlreadyExists") {
+            logger.error(error);
+            logger.error(cypher);
+        }
+    }
+}
+
+export const createContract = async () => {
+    // logger.info("Creating contract ${contract}")
 }
 
 export const setupDataScience = async () => {
@@ -369,21 +405,23 @@ export const createMpNode = async (mp: Mp) => {
 
 export const createDonar = async (donar: any) => {
 
-    const nodeCypher: string = `CREATE (donar:Donar {
-        donar: "${donar.DonorName}",                                
-        accountingUnitName: "${donar.AccountingUnitName}",
-        donorStatus: "${donar.DonorStatus}",
-        postcode: "${donar.Postcode}"
-        })`;
+    let type = donar.DonorStatus.toLowerCase() === "Individual" ? "Individual" : "Organisation";
+
+    const nodeCypher: string = `CREATE (donar:${type} {
+            donar: "${donar.DonorName}",                                
+            accountingUnitName: "${donar.AccountingUnitName}",
+            donorStatus: "${donar.DonorStatus}",
+            postcode: "${donar.Postcode}"
+            })`;
 
     const relCypher = `
-    MATCH (donar:Donar {donar: "${donar.DonorName}"} )  
-    MATCH (party:Party {partyName: "${donar.Party}"} )     
-    CREATE (donar)-[:DONATED_TO { natureOfDonation: "${donar.NatureOfDonation}", donationType: "${donar.DonationType}", ecRef: "${donar.ECRef}", acceptedDate: datetime("${donar.AcceptedDate}"), receivedDate: datetime("${donar.ReceivedDate}"), amount: ${donar.Value} } ]->(party)`;
+        MATCH (donar:${type} {donar: "${donar.DonorName}"} )  
+        MATCH (party:Party {partyName: "${donar.Party}"} )     
+        CREATE (donar)-[:DONATED_TO { natureOfDonation: "${donar.NatureOfDonation}", donationType: "${donar.DonationType}", ecRef: "${donar.ECRef}", acceptedDate: datetime("${donar.AcceptedDate}"), receivedDate: datetime("${donar.ReceivedDate}"), amount: ${donar.Value} } ]->(party)`;
 
     const session = driver.session();
     try {
-        const result = await runCypher(nodeCypher, session);        
+        const result = await runCypher(nodeCypher, session);
     } catch (error: any) {
         if (error.code !== "Neo.ClientError.Schema.ConstraintValidationFailed") {
             logger.error(`Error adding donar node to neo ${error}`);
@@ -392,7 +430,7 @@ export const createDonar = async (donar: any) => {
     }
 
     try {
-        const result = await runCypher(relCypher, session);        
+        const result = await runCypher(relCypher, session);
     } catch (error: any) {
         if (error.code !== "Neo.ClientError.Schema.ConstraintValidationFailed") {
             logger.error(`Error adding donar relationship to neo ${error}`);
