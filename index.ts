@@ -3,12 +3,14 @@ import { Mp } from "./src/models/mps";
 import { Division } from "./src/models/divisions";
 import { createParties } from "./src/nodeManager";
 import { createDonations } from "./src/donationsManager";
+import { createContracts } from "./src/contractsManager";
 
 const logger = require('./src/logger');
 
 const CREATE_PARTIES = process.env.CREATE_PARTIES === "true" ? true : false;
 const CREATE_DONATIONS = process.env.CREATE_DONATIONS === "true" ? true : false;
 const RUN_DATA_SCIENCE = process.env.RUN_DATA_SCIENCE === "true" ? true : false;
+const CREATE_CONTRACTS = process.env.CREATE_CONTRACTS === "true" ? true : false;
 
 const endAndPrintTiming = (timingStart: number, timingName: string) => {
   // END timing
@@ -51,6 +53,7 @@ const go = async () => {
   let timingStart = performance.now();
 
   if (CREATE_PARTIES) {
+    logger.info("CREATING PARTIES")
     //create parties
     await createParties();
     endAndPrintTiming(timingStart, 'created Parties');
@@ -62,12 +65,19 @@ const go = async () => {
 
 
   if (CREATE_DONATIONS) {
+    logger.info("CREATING DONATIONS")
     await createDonations(Number(process.env.DONATIONS_FROM_YEAR));
     endAndPrintTiming(timingStart, 'created Donations');
   }
 
   if (RUN_DATA_SCIENCE) {
+    logger.info("CREATING DATA SCIENCE")
     await setupDataScience();
+  }
+
+  if (CREATE_CONTRACTS) {
+    logger.info("CREATING CONTRACTS")
+    createContracts();
   }
   
   endAndPrintTiming(totalTimeStart, 'Workflow complete');

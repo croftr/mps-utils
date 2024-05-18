@@ -259,8 +259,8 @@ export const setupNeo = async () => {
         let result;
         // result = await runCypher(`CREATE CONSTRAINT relUnique FOR ()-[r:VOTED_FOR]-() REQUIRE (r.votedAye) IS UNIQUE`, session);
         result = await runCypher(`CREATE CONSTRAINT FOR (mp:Mp) REQUIRE mp.id IS UNIQUE`, session);
-        result = await runCypher(`CREATE CONSTRAINT FOR (donar:Organisation) REQUIRE donar.donar IS UNIQUE`, session);
-        result = await runCypher(`CREATE CONSTRAINT FOR (donar:Individual) REQUIRE donar.donar IS UNIQUE`, session);
+        result = await runCypher(`CREATE CONSTRAINT FOR (org:Organisation) REQUIRE org.donar IS UNIQUE`, session);
+        result = await runCypher(`CREATE CONSTRAINT FOR (ind:Individual) REQUIRE ind.donar IS UNIQUE`, session);
         result = await runCypher(`CREATE CONSTRAINT FOR (party:Party) REQUIRE party.partyName IS UNIQUE`, session);
         // result = await runCypher(`CREATE CONSTRAINT voted_for_unique ON (mp:Mp)-[:VOTED_FOR]->(division:Division) REQUIRE (mp.id <> division.id)`, session);
     } catch (error) {
