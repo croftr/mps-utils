@@ -98,8 +98,18 @@ export const createDonations = async (from=2001) => {
             while (isRecordsRemaining) {
 
                 const url = getUrl({ from: `${from}-01-01`, to: `${to}-01-01`, start });
-                const response = await fetch(url);
-                const donationsResult = await response.json();
+
+                let response, donationsResult;
+                try {
+                    response = await fetch(url);
+                    donationsResult = await response.json();
+                } catch (error) {
+                    // @ts-ignore   
+                    logger.error(`Error fetching donars ${error.message}`)
+                    logger.info("Donars Fetch failed so tying again.....")
+                    response = await fetch(url);
+                    donationsResult = await response.json();
+                }                
                 
                 logger.info(`Got [${donationsResult.Result.length}] of [${donationsResult.Total}] for period: [${from} - ${to}] range: [${start} - ${ROWS_TO_TAKE}]. [${donationsResult.Total - currentlyProcessed}] remain`);
 

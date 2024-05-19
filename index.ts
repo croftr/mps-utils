@@ -11,6 +11,7 @@ const CREATE_PARTIES = process.env.CREATE_PARTIES === "true" ? true : false;
 const CREATE_DONATIONS = process.env.CREATE_DONATIONS === "true" ? true : false;
 const RUN_DATA_SCIENCE = process.env.RUN_DATA_SCIENCE === "true" ? true : false;
 const CREATE_CONTRACTS = process.env.CREATE_CONTRACTS === "true" ? true : false;
+const DELETE_DONARS = process.env.DELETE_DONARS === "true" ? true : false;
 
 const endAndPrintTiming = (timingStart: number, timingName: string) => {
   // END timing
@@ -38,19 +39,15 @@ const go = async () => {
 
   await setupNeo();
 
-  // await batchDelete();
-
-  const allMps: Array<Mp> = [];
-  const allDivisions: Array<Division> = [];
-
-  const MAX_LOOPS = 1000;
-  let skip = 0;
-
-  let neoCreateCount = 0;
-
   // Start timing
   const totalTimeStart = performance.now();
   let timingStart = performance.now();
+
+  if (DELETE_DONARS) {
+    await batchDelete();
+    // END timing
+    endAndPrintTiming(timingStart, 'delete donars');
+  }
 
   if (CREATE_PARTIES) {
     logger.info("CREATING PARTIES")
@@ -59,9 +56,7 @@ const go = async () => {
     endAndPrintTiming(timingStart, 'created Parties');
   }
 
-
-  // END timing
-  endAndPrintTiming(timingStart, 'created divisions');
+  
 
 
   if (CREATE_DONATIONS) {
@@ -78,9 +73,10 @@ const go = async () => {
   if (CREATE_CONTRACTS) {
     logger.info("CREATING CONTRACTS")
     createContracts();
+    endAndPrintTiming(timingStart, 'create contracts');
   }
   
-  endAndPrintTiming(totalTimeStart, 'Workflow complete');
+  endAndPrintTiming(totalTimeStart, 'Everything complete');
   logger.info('THE END');
 }
 
