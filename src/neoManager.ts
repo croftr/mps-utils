@@ -2,6 +2,8 @@ import { Division } from './models/divisions';
 import { Mp } from './models/mps';
 import { VotedFor } from './models/relationships';
 import neo4j from "neo4j-driver";
+import { contractAwardedToNode, contractNode, issuedContractRelationship, recievedContractRelationship } from "./models/contracts";
+import { log } from 'console';
 
 const logger = require('./logger');
 
@@ -257,12 +259,28 @@ export const setupNeo = async () => {
 
     try {
         let result;
-        // result = await runCypher(`CREATE CONSTRAINT relUnique FOR ()-[r:VOTED_FOR]-() REQUIRE (r.votedAye) IS UNIQUE`, session);
-        result = await runCypher(`CREATE CONSTRAINT FOR (mp:Mp) REQUIRE mp.id IS UNIQUE`, session);
-        result = await runCypher(`CREATE CONSTRAINT FOR (org:Organisation) REQUIRE org.donar IS UNIQUE`, session);
-        result = await runCypher(`CREATE CONSTRAINT FOR (ind:Individual) REQUIRE ind.donar IS UNIQUE`, session);
-        result = await runCypher(`CREATE CONSTRAINT FOR (party:Party) REQUIRE party.partyName IS UNIQUE`, session);
-        // result = await runCypher(`CREATE CONSTRAINT voted_for_unique ON (mp:Mp)-[:VOTED_FOR]->(division:Division) REQUIRE (mp.id <> division.id)`, session);
+
+        // Range Indexes
+        result = await runCypher(`CREATE RANGE INDEX IF NOT EXISTS FOR (e:Mp) ON (e.id)`, session);
+        result = await runCypher(`CREATE RANGE INDEX IF NOT EXISTS FOR (e:Party) ON (e.partyName)`, session);
+        result = await runCypher(`CREATE RANGE INDEX IF NOT EXISTS FOR (e:Organisation) ON (e.donar)`, session);
+        result = await runCypher(`CREATE RANGE INDEX IF NOT EXISTS FOR (e:Organisation) ON (e.DonorName)`, session);
+        result = await runCypher(`CREATE RANGE INDEX IF NOT EXISTS FOR (e:Individual) ON (e.donar)`, session);
+        result = await runCypher(`CREATE RANGE INDEX IF NOT EXISTS FOR (e:Individual) ON (e.DonorName)`, session);
+        result = await runCypher(`CREATE RANGE INDEX IF NOT EXISTS FOR (e:Contract) ON (e.contractId)`, session);
+
+        // Uniqueness Constraints (These will automatically create range indexes
+        result = await runCypher(`CREATE CONSTRAINT IF NOT EXISTS ON (e:Mp) ASSERT (e.id) IS UNIQUE`, session);
+        result = await runCypher(`CREATE CONSTRAINT IF NOT EXISTS ON (e:Party) ASSERT (e.partyName) IS UNIQUE`, session);
+        result = await runCypher(`CREATE CONSTRAINT IF NOT EXISTS ON (e:Organisation) ASSERT (e.donar) IS UNIQUE`, session);
+        result = await runCypher(`CREATE CONSTRAINT IF NOT EXISTS ON (e:Organisation) ASSERT (e.DonorName) IS UNIQUE`, session);
+        result = await runCypher(`CREATE CONSTRAINT IF NOT EXISTS ON (e:Organisation) ASSERT (e.Name) IS UNIQUE`, session);
+        result = await runCypher(`CREATE CONSTRAINT IF NOT EXISTS ON (e:Individual) ASSERT (e.donar) IS UNIQUE`, session);
+        result = await runCypher(`CREATE CONSTRAINT IF NOT EXISTS ON (e:Individual) ASSERT (e.DonorName) IS UNIQUE`, session);
+        result = await runCypher(`CREATE CONSTRAINT IF NOT EXISTS ON (e:Individual) ASSERT (e.Name) IS UNIQUE`, session);
+        result = await runCypher(`CREATE CONSTRAINT IF NOT EXISTS ON (e:Contract) ASSERT (e.contractId) IS UNIQUE`, session);
+
+
     } catch (error) {
         //contraint already exists so proceed
     } finally {
@@ -276,6 +294,7 @@ export const setupNeo = async () => {
 export const batchDelete = async () => {
 
     CONNECTION_STRING = `bolt://${process.env.DOCKER_HOST}:7687`;
+
     const cypher = `
     MATCH (n:Organisation)-[r:DONATED_TO]-(p:Party)
     WITH n LIMIT 100
@@ -292,10 +311,10 @@ export const batchDelete = async () => {
             logger.info(` deleted ${result.summary.updateStatistics._stats.nodesDeleted} nodes and ${result.summary.updateStatistics._stats.relationshipsDeleted} relationships`);
             if (result.summary.updateStatistics._stats.nodesDeleted === 0) {
                 keepgoing = false;
-            }            
+            }
         }
         logger.info("All Done!")
-        
+
     } catch (error: any) {
         if (error.code !== "Neo.ClientError.Schema.ConstraintValidationFailed" && error.code !== "Neo.ClientError.Schema.EquivalentSchemaRuleAlreadyExists") {
             logger.error(error);
@@ -304,8 +323,123 @@ export const batchDelete = async () => {
     }
 }
 
-export const createContract = async () => {
-    // logger.info("Creating contract ${contract}")
+export const createContract = async (contractAwardedTo: contractAwardedToNode, contract: contractNode, issuedContract: issuedContractRelationship, recievedContract: recievedContractRelationship) => {
+
+    CONNECTION_STRING = `bolt://${process.env.DOCKER_HOST}:7687`;
+
+    driver = neo4j.driver(CONNECTION_STRING, neo4j.auth.basic(process.env.NEO4J_USER || '', process.env.NEO4J_PASSWORD || ''));
+    const session = driver.session();
+
+    console.log("bobby >>> ", contract.publishedDate);
+
+
+    //ogganisation could already exist as a donar for example     
+    const contractAwardedToCypher = `
+    MERGE (n:Organisation { Name: $organisationName })
+    SET n.Website = $contactWebsite,
+        n.Address = $contactAddress,
+        n.Email = $contactEmail,
+        n.Country = $contactCountry,
+        n.ContactName = $contactName,
+        n.ContactPhone = $contactPhone,
+        n.ContactTown = $contactTown
+    `;
+    
+    const parameters1 = {
+        organisationName: contractAwardedTo.organisationName,
+        contactWebsite: contractAwardedTo.contactWebsite,
+        contactAddress: contractAwardedTo.contactAddress,
+        contactEmail: contractAwardedTo.contactEmail,
+        contactCountry: contractAwardedTo.contactCountry,
+        contactName: contractAwardedTo.contactName,
+        contactPhone: contractAwardedTo.contactPhone,
+        contactTown: contractAwardedTo.contactTown
+    };
+    
+
+    try {
+        const result1 = await session.run(contractAwardedToCypher, parameters1);        
+    } catch (error) {
+      // Handle errors
+      console.error("Error creating/updating org:", error);
+      throw error;  // Re-throw to propagate the error if needed
+  }
+   
+
+    // await runCypher(contractAwardedToCypher, session);
+
+    // const contractCypher: string = `CREATE (n:Contract {
+    //     ContractId: "${contract.contractId}",        
+    //     AwardedValue: ${contract.awardedValue},
+    //     Category: "${contract.category}",
+    //     Description: "${contract.description}",        
+    //     IsSubContract: ${contract.isSubContract},
+    //     IsSuitableForSme: ${contract.isSuitableForSme},
+    //     IsSuitableForVco: ${contract.isSuitableForVco},                
+    //     Region: "${contract.region}",
+    //     PublishedDate: datetime("${contract.publishedDate}"),
+    //     EndDate: date("${contract.endDate}"),
+    //     AwardedDate: date("${contract.awardedDate}"),
+    //     IssuedByParties: ${contract.issuedByParties}
+    //     })`;
+
+    // await runCypher(contractCypher, session);
+
+    const contractCypher = `
+    MERGE (n:Contract { ContractId: $contractId })
+    SET n.AwardedValue = $awardedValue,
+        n.Title = $title,
+        n.Category = $category,
+        n.Description = $description,
+        n.IsSubContract = $isSubContract,
+        n.IsSuitableForSme = $isSuitableForSme,
+        n.IsSuitableForVco = $isSuitableForVco,
+        n.Region = $region,
+        n.PublishedDate = date($publishedDate),
+        n.EndDate = date($endDate),
+        n.AwardedDate = date($awardedDate),
+        n.IssuedByParties = $issuedByParties
+    `;
+
+    const parameters2 = {
+        contractId: contract.contractId,
+        title: contract.title,
+        awardedValue: contract.awardedValue,
+        category: contract.category,
+        description: contract.description,
+        isSubContract: contract.isSubContract,
+        isSuitableForSme: contract.isSuitableForSme,
+        isSuitableForVco: contract.isSuitableForVco,
+        region: contract.region,
+        publishedDate: contract.publishedDate, // Assuming already in "YYYY-MM-DDTHH:mm:ss[.sss][Z]" format
+        endDate: contract.endDate, // Use your formatDate function from previous answers
+        awardedDate: contract.awardedDate,
+        issuedByParties: contract.issuedByParties // Pass the array directly
+    };
+
+    console.log("params ", parameters2);
+    
+    
+    try {
+        const result2 = await session.run(contractCypher, parameters2);        
+    } catch (error) {
+        // Handle errors
+        console.error("Error creating/updating contract:", error);
+        throw error;  // Re-throw to propagate the error if needed
+    }
+    
+        
+    const recievedContractRelCypher = `MATCH (org:Organisation { Name: "${contractAwardedTo.organisationName}"}) MATCH (con:Contract {ContractId: "${contractAwardedTo.contractId}"}) CREATE (org)-[:AWARDED { AwardedDate: date("${contract.awardedDate}") }]->(con)`;
+    await runCypher(recievedContractRelCypher, session);
+
+    //if more than 1 party was in power at the time create relationship for each party 
+    for (let partyName of contract.issuedByParties) {
+        const issuedContractRelCypher = `MATCH (party:Party { partyName: "${partyName}"}) MATCH (con:Contract { ContractId: "${contractAwardedTo.contractId}"}) CREATE (party)-[:TENDERED { PublishedDate: date("${contract.publishedDate}") }]->(con)`;
+        await runCypher(issuedContractRelCypher, session);
+    }
+    
+    session.close();  // Close the session when done
+
 }
 
 export const setupDataScience = async () => {
@@ -405,10 +539,11 @@ export const createMpNode = async (mp: Mp) => {
 
 export const createDonar = async (donar: any) => {
 
-    let type = donar.DonorStatus.toLowerCase() === "Individual" ? "Individual" : "Organisation";
+    let type = donar.DonorStatus === "Individual" ? "Individual" : "Organisation";
 
     const nodeCypher: string = `CREATE (donar:${type} {
             donar: "${donar.DonorName}",                                
+            Name: "${donar.DonorName}",                                
             accountingUnitName: "${donar.AccountingUnitName}",
             donorStatus: "${donar.DonorStatus}",
             postcode: "${donar.Postcode}"

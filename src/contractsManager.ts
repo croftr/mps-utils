@@ -1,55 +1,21 @@
 
 const logger = require('./logger');
 
-import { createContract } from "./neoManager";
+import { contractAwardedToNode, contractNode, issuedContractRelationship, recievedContractRelationship } from "./models/contracts";
 import fs from 'fs';
 import { parse } from '@fast-csv/parse';
-import { bool } from "aws-sdk/clients/signer";
+import { createContract } from "./neoManager";
+import { getCategory } from "./utils/categoryManager";
 
 const CONSERVATIVE = "Conservative";
 const LABOUR = "Labour";
 const LIBERAL = "Liberal Democrat";
 
 const partyInPower = [
-    { parties: ["LABOUR"], fromDate: new Date("1997-05-02"), toDate: new Date("2010-05-11") },
-    { parties: ["CONSERVATIVE", "LIBERAL"], fromDate: new Date("2010-05-11"), toDate: new Date("2015-05-08") },
-    { parties: ["CONSERVATIVE"], fromDate: new Date("2015-05-08"), toDate: new Date("2025-01-28") },
+    { parties: ["Labour"], fromDate: new Date("1997-05-02"), toDate: new Date("2010-05-11") },
+    { parties: ["Conservative", "Liberal Democrat"], fromDate: new Date("2010-05-11"), toDate: new Date("2015-05-08") },
+    { parties: ["Conservative"], fromDate: new Date("2015-05-08"), toDate: new Date("2025-01-28") },
 ];
-
-type contractNode = {
-    contractId: string,
-    title: string,
-    description: string,
-    publishedDate: string,
-    startDate: string,
-    endDate: string,
-    awardedDate: string,
-    awardedValue: string,
-    isSubContract: boolean,
-    isSuitableForSme: boolean,
-    isSuitableForVco: boolean,
-    issuedByParty: Array<string>
-}
-
-type contractAwardedToNode = {
-    contractId: string,
-    contactName: string,
-    contactEmail: string,
-    contactAddress: string,
-    contactTown: string,
-    contactPostcode: string,
-    contactCountry: string,
-    contactPhone: string,
-    contactWebsite: string,
-}
-
-type recievedContractRelationship = {
-    awardedDate: string,
-}
-
-type issuedContractRelationship = {
-    awardedDate: string,
-}
 
 const getPartyFromIssueDate = (issuedDate: string): Array<string> => {
 
@@ -68,6 +34,11 @@ const getPartyFromIssueDate = (issuedDate: string): Array<string> => {
 
 }
 
+const formatDate = (dateStr:string) => {
+    const [day, month, year] = dateStr.split("/");
+    return `${year}-${month}-${day}`;
+  }
+
 
 export const createContracts = async (filename = "contracts-test.csv") => {
 
@@ -76,29 +47,30 @@ export const createContracts = async (filename = "contracts-test.csv") => {
     const parser = parse({ headers: true })  // Assuming your CSV has headers
         .on('error', error => console.error(error))
         .on('data', row => {
-
-            console.log("Got row of ", row);
-
-
+            
+            const publishedDate = row['Published Date'].substring(0,10);
+            
+            // console.log("Got row of ", row);
             const contract: contractNode = {
                 contractId: row['Notice Identifier'],
                 title: row['Title'],
-                description: row['Description'],
-                publishedDate: row['Published Date'],
-                startDate: row['Start Date'],
-                endDate: row['End Date'],
-                awardedDate: row['Awarded Date'],
+                description: row['Description'].substring(0,200),
+                region: row['Region'],
+                publishedDate: publishedDate,
+                startDate: formatDate(row['Start Date']),
+                endDate: formatDate(row['End Date']),
+                awardedDate: formatDate(row['Awarded Date']),
                 awardedValue: row['Awarded Value'],
                 isSubContract: row['Is sub-contract'] === "Yes" ? true : false,
                 isSuitableForSme: row['Suitable for SME'] === "Yes" ? true : false,
                 isSuitableForVco: row['Suitable for VCO'] === "Yes" ? true : false,
-                issuedByParty: getPartyFromIssueDate(row['Awarded Date'])                
+                issuedByParties: getPartyFromIssueDate(row['Awarded Date']),
+                category: getCategory(row['Title'])
             }
-
-            console.log("Created ", contract);
-
+            
             const contractAwardedTo: contractAwardedToNode = {
                 contractId: row['Notice Identifier'],
+                organisationName: row['Organisation Name'],
                 contactName: row['Contact Name'],
                 contactEmail: row['Contact Email'],
                 contactAddress: row['Contact Address 1'],
@@ -108,7 +80,7 @@ export const createContracts = async (filename = "contracts-test.csv") => {
                 contactPhone: row['Contact Telephone'],
                 contactWebsite: row['Contact Website'],
             }
-
+            
             const recievedContract: recievedContractRelationship = {
                 awardedDate: row['Awarded Date'],
             }
@@ -117,7 +89,7 @@ export const createContracts = async (filename = "contracts-test.csv") => {
                 awardedDate: row['Awarded Date'],
             }
 
-            // createContract({contract, contractAwardedTo, recievedContract, issuedContract});
+            createContract(contractAwardedTo, contract, recievedContract, issuedContract);
 
         })
         // @ts-ignore
