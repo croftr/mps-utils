@@ -59,11 +59,13 @@ export const getContracts = async () => {
 
         // @ts-ignore
         contracts.each((i, div) => {
-            
-            const title = $('.search-result-header').text();
-            const orgName = $('.search-result >.search-result-sub-header').text();
 
-            console.log(orgName);
+            const $div = $(div);
+            
+            const title = $(div).find('.search-result-header').text();
+            const orgName = $(div).find('.search-result-sub-header').text();
+
+            console.log(`${title}----${orgName}`);
             
 
             // const contract: contractNode = {
