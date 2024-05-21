@@ -3,7 +3,7 @@ import { Mp } from "./src/models/mps";
 import { Division } from "./src/models/divisions";
 import { createParties } from "./src/nodeManager";
 import { createDonations } from "./src/donationsManager";
-import { createContracts } from "./src/contractsManager";
+import { createContracts, getContracts } from "./src/contractsManager";
 
 const logger = require('./src/logger');
 
@@ -37,7 +37,7 @@ const sortMps = (a: Mp, b: Mp) => {
 
 const go = async () => {
 
-  await setupNeo();
+  // await setupNeo();
 
   // Start timing
   const totalTimeStart = performance.now();
@@ -72,7 +72,8 @@ const go = async () => {
 
   if (CREATE_CONTRACTS) {
     logger.info("CREATING CONTRACTS")
-    createContracts();
+    // createContracts();
+    getContracts()
     endAndPrintTiming(timingStart, 'create contracts');
   }
   
