@@ -56,9 +56,6 @@ const go = async () => {
     endAndPrintTiming(timingStart, 'created Parties');
   }
 
-  
-
-
   if (CREATE_DONATIONS) {
     logger.info("CREATING DONATIONS")
     await createDonations(Number(process.env.DONATIONS_FROM_YEAR));
@@ -73,7 +70,7 @@ const go = async () => {
   if (CREATE_CONTRACTS) {
     logger.info("CREATING CONTRACTS")
     // createContracts();
-    getContracts()
+    await getContracts()
     endAndPrintTiming(timingStart, 'create contracts');
   }
   

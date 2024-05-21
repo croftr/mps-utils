@@ -43,12 +43,27 @@ const formatDate = (dateStr: string) => {
 
 
 export const getContracts = async () => {
-    let page = 2;
+
+
+    let page = 1;
     // // const pageCount = 15896
-    const pageCount = 3;
-    while (page < pageCount) {
-        const url = `https://www.contractsfinder.service.gov.uk/Search/Results?&page=${page}`
-        const result = await fetch(url);
+    const pageCount = 4;
+    let keepGoing = true;
+    while (keepGoing) {        
+        
+        let url;
+        if (page === 1) {
+            url = `https://www.contractsfinder.service.gov.uk/Search/Results}`
+        } else {
+            url = `https://www.contractsfinder.service.gov.uk/Search/Results?&page=${page}`
+        }
+
+        const cookie = "tngqld6kba6jcnjvbi2v1ups56";
+
+        logger.info(`PAGE ${page} - ${url}`)
+        
+        //make a query on the webside for what we need then set this cookie
+        const result = await fetch(url, { headers: {"Cookie": "CF_AUTH=tngqld6kba6jcnjvbi2v1ups56; CF_COOKIES_PREFERENCES_SET=1; CF_PAGE_TIMEOUT=1716315309219"} });
         const resultBody = await result.text();
         // console.log(resultBody);
 
@@ -61,13 +76,69 @@ export const getContracts = async () => {
         contracts.each((i, div) => {
 
             const $div = $(div);
-            
-            const title = $(div).find('.search-result-header').text();
-            const orgName = $(div).find('.search-result-sub-header').text();
 
-            console.log(`${title}----${orgName}`);
+            const stage = $(div).find(':nth-child(6)').text().trim(); 
+
+            if (stage === "Procurement stage Awarded contract") {
+
+                console.log(`GOT ONE!  ${stage}`);    
+                const title = $(div).find('.search-result-header').text().trim();
+                const orgName = $(div).find('.search-result-sub-header').text().trim();
+                const description = $(div).find(':nth-child(4)').text().replace(/^\s*[\r\n]/gm, '');
+                const location = $(div).find(':nth-child(7)').text().trim().split(" ")[2];
+
+                console.log("title ", title);
+                console.log("orgName", orgName);
+                console.log("description", description);
+                console.log("location", location);
+                
+                const v1 = $(div).find(':nth-child(10)').text()
+                const value = $(div).find(':nth-child(10)').text().trim().split(" ")[2];            
+                const cleanedStr = value.replace(/[^0-9.]/g, '');            
+                const awardedValue = Number(cleanedStr);
+    
+                const awardedTo = $(div).find(':nth-child(10)').text()
+                const awardedDate = $(div).find(':nth-child(13)').text()
+
+                const contract = {
+                    title,
+                    description,
+                    supplier: orgName,
+                    category: getCategory(title),
+                    location,
+                    awardedValue
+
+                }
+
+                const contractAwardedTo = {
+                    awardedTo,
+                    awardedDate
+                }
+
+                // logger.info(`contract ${JSON.stringify(contract)}`)
+                // logger.info(`contractAwardedTo ${JSON.stringify(contractAwardedTo)}`)
+                
+                // console.log("awardedTo", awardedTo);
+                // console.log("awardedDate", awardedDate);
+                
+                
+                
+
+                keepGoing = false;
+
+            } else {
+                console.log(`skipping ${stage}`);    
+            }
+            
+            
+            // const awardedDate = $(div).find(':nth-child(12)').text().trim(); 
             
 
+
+            // console.log(`"${location}"----"${description}"`);
+            
+            
+        
             // const contract: contractNode = {
             //     contractId: row['Notice Identifier'],
             //     title: title,
