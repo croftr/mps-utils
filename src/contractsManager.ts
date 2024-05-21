@@ -85,20 +85,16 @@ export const getContracts = async () => {
                 const title = $(div).find('.search-result-header').text().trim();
                 const orgName = $(div).find('.search-result-sub-header').text().trim();
                 const description = $(div).find(':nth-child(4)').text().replace(/^\s*[\r\n]/gm, '');
-                const location = $(div).find(':nth-child(7)').text().trim().split(" ")[2];
-
-                console.log("title ", title);
-                console.log("orgName", orgName);
-                console.log("description", description);
-                console.log("location", location);
+                const location = $(div).find(':nth-child(7)').text().trim().split(" ")[2];                
                 
-                const v1 = $(div).find(':nth-child(10)').text()
-                const value = $(div).find(':nth-child(10)').text().trim().split(" ")[2];            
+                
+                const value = $(div).find(':nth-child(8)').text().trim().split(" ")[2];            
                 const cleanedStr = value.replace(/[^0-9.]/g, '');            
                 const awardedValue = Number(cleanedStr);
-    
-                const awardedTo = $(div).find(':nth-child(10)').text()
-                const awardedDate = $(div).find(':nth-child(13)').text()
+
+                const awardedTo = $(div).find(':nth-child(9)').text().split(" ").slice(2).join(" ");            
+                    
+                const awardedDate = $(div).find(':nth-child(10)').text().split(" ").slice(2).join(" ");           ;    
 
                 const contract = {
                     title,
@@ -115,8 +111,8 @@ export const getContracts = async () => {
                     awardedDate
                 }
 
-                // logger.info(`contract ${JSON.stringify(contract)}`)
-                // logger.info(`contractAwardedTo ${JSON.stringify(contractAwardedTo)}`)
+                logger.info(`contract ${JSON.stringify(contract)}`)
+                logger.info(`contractAwardedTo ${JSON.stringify(contractAwardedTo)}`)
                 
                 // console.log("awardedTo", awardedTo);
                 // console.log("awardedDate", awardedDate);
