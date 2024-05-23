@@ -19,6 +19,16 @@ const partyInPower = [
     { parties: ["Conservative"], fromDate: new Date("2015-05-08"), toDate: new Date("2025-01-28") },
 ];
 
+const endAndPrintTiming = (timingStart: number, timingName: string) => {
+
+    let timingEnd = performance.now();
+    const elapsedSeconds = (timingEnd - timingStart) / 1000;
+    const minutes = elapsedSeconds / 60;
+    logger.info(`<<TIMING>> ${timingName} in ${minutes.toFixed(2)} minutes`);
+
+}
+
+
 const getPartyFromIssueDate = (issuedDate: string): Array<string> => {
 
     const targetDate = new Date(issuedDate.split('/').reverse().join('-'));
@@ -43,7 +53,9 @@ const formatDate = (dateStr: string) => {
 
 export const getContracts = async () => {
 
-    let page = 1;    
+    let timingStart = performance.now();
+
+    let page = 1;
     const pageCount = 3;
     let keepGoing = true;
     while (keepGoing) {
@@ -55,9 +67,9 @@ export const getContracts = async () => {
             url = `https://www.contractsfinder.service.gov.uk/Search/Results?&page=${page}`
         }
 
-        const cookie = "CF_AUTH=tngqld6kba6jcnjvbi2v1ups56; CF_COOKIES_PREFERENCES_SET=1; CF_PAGE_TIMEOUT=1716476939384";
+        const cookie = "CF_AUTH=tngqld6kba6jcnjvbi2v1ups56; CF_COOKIES_PREFERENCES_SET=1; CF_PAGE_TIMEOUT=1716481766854";
 
-        // logger.info(`PAGE ${page} - ${url}`)
+        logger.info(`PAGE ${page} - ${url}`)
 
         //make a query on the webside for what we need then set this cookie
         const result = await fetch(url, { headers: { "Cookie": cookie } });
@@ -71,7 +83,7 @@ export const getContracts = async () => {
         // @ts-ignore
         for (const div of contracts) {
 
-            const contract:contractNode = {
+            const contract: contractNode = {
                 title: "",
                 supplier: "",
                 description: "",
@@ -84,10 +96,10 @@ export const getContracts = async () => {
                 link: "",
                 location: ""
             };
-            const contractAwardedTo:contractAwardedToNode ={
+            const contractAwardedTo: contractAwardedToNode = {
                 name: ""
             };
-            
+
 
             const stage = $(div).find(':nth-child(6)').text().trim();
 
@@ -107,7 +119,7 @@ export const getContracts = async () => {
                 logger.info(`Get details ${link}`);
 
                 const details = await fetch(link);
-                
+
                 const resultBody = await details.text();
 
                 const $1 = cheerio.load(resultBody);
@@ -128,21 +140,21 @@ export const getContracts = async () => {
 
 
                 const awardedDate = $1(`#content-holder-left .content-block:nth-child(${awardInfoIndex + 3})`).find('p').eq(0).text();
-            
-                 contract.title = title;
-                 contract.description = description;
-                 contract.link = link;
-                 contract.supplier = orgName;
-                 contract.category = getCategory(title);
-                 contract.industry = industry;
-                 contract.location = location;
-                 contract.awardedValue = awardedValue;
-                 contract.publishedDate = publishedDate;
-                 contract.awardedDate = awardedDate;
-                 contract.issuedByParties = getPartyFromIssueDate(awardedDate),
 
-                contractAwardedTo.name = awardedTo;
-                
+                contract.title = title;
+                contract.description = description;
+                contract.link = link;
+                contract.supplier = orgName;
+                contract.category = getCategory(title);
+                contract.industry = industry;
+                contract.location = location;
+                contract.awardedValue = awardedValue;
+                contract.publishedDate = publishedDate;
+                contract.awardedDate = awardedDate;
+                contract.issuedByParties = getPartyFromIssueDate(awardedDate),
+
+                    contractAwardedTo.name = awardedTo;
+
                 logger.info(`contract ${JSON.stringify(contract)}`)
                 logger.info(`contractAwardedTo ${JSON.stringify(contractAwardedTo)}`)
 
@@ -151,7 +163,9 @@ export const getContracts = async () => {
                 keepGoing = false;
 
             } else {
-                console.log(`skipping ${stage}`);
+                endAndPrintTiming(timingStart, 'create contracts');
+                logger.error(`Got stage of ${stage} token expired`);
+                throw new Error("Session has expired")
             }
         };
 
