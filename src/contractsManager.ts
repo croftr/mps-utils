@@ -56,7 +56,7 @@ export const getContracts = async () => {
     let timingStart = performance.now();
 
     let page = 1;
-    const pageCount = 3;
+    let createdCount = 0;
     let keepGoing = true;
     while (keepGoing) {
 
@@ -160,10 +160,13 @@ export const getContracts = async () => {
 
                 createContract(contractAwardedTo, contract);
 
+                createdCount = createdCount+1;
+
                 keepGoing = false;
 
             } else {
-                endAndPrintTiming(timingStart, 'create contracts');
+                logger.info(`Created ${createdCount} contracts`)
+                endAndPrintTiming(timingStart, 'create contracts');                
                 logger.error(`Got stage of ${stage} token expired`);
                 throw new Error("Session has expired")
             }
@@ -173,7 +176,8 @@ export const getContracts = async () => {
 
     }
 
-
+    logger.info(`Created ${createdCount} contracts`)
+    endAndPrintTiming(timingStart, 'create contracts complete');                
     logger.info("The end")
 }
 
