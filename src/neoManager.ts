@@ -323,7 +323,7 @@ export const batchDelete = async () => {
     }
 }
 
-export const createContract = async (contractAwardedTo: contractAwardedToNode, contract: contractNode, issuedContract: issuedContractRelationship, recievedContract: recievedContractRelationship) => {
+export const createContract = async (contractAwardedTo: contractAwardedToNode, contract: contractNode) => {
 
     CONNECTION_STRING = `bolt://${process.env.DOCKER_HOST}:7687`;
 

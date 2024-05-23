@@ -87,8 +87,7 @@ export const getContracts = async () => {
             const contractAwardedTo:contractAwardedToNode ={
                 name: ""
             };
-
-            const $div = $(div);
+            
 
             const stage = $(div).find(':nth-child(6)').text().trim();
 
@@ -99,21 +98,16 @@ export const getContracts = async () => {
                 const orgName = $(div).find('.search-result-sub-header').text().trim();
                 const description = $(div).find(':nth-child(4)').text().replace(/^\s*[\r\n]/gm, '');
                 const location = $(div).find(':nth-child(7)').text().trim().split(" ")[2];
-
                 const value = $(div).find(':nth-child(8)').text().trim().split(" ")[2];
                 const cleanedStr = value.replace(/[^0-9.]/g, '');
                 const awardedValue = Number(cleanedStr);
-
                 const awardedTo = $(div).find(':nth-child(9)').text().split(" ").slice(2).join(" ");
-
                 const publishedDate = $(div).find(':nth-child(10)').text().split(" ").slice(2).join(" ");;
-
-
 
                 logger.info(`Get details ${link}`);
 
                 const details = await fetch(link);
-                // console.log("step 1 ",  details);
+                
                 const resultBody = await details.text();
 
                 const $1 = cheerio.load(resultBody);
@@ -147,13 +141,12 @@ export const getContracts = async () => {
                  contract.awardedDate = awardedDate;
                  contract.issuedByParties = getPartyFromIssueDate(awardedDate),
 
-
                 contractAwardedTo.name = awardedTo;
                 
-
                 logger.info(`contract ${JSON.stringify(contract)}`)
                 logger.info(`contractAwardedTo ${JSON.stringify(contractAwardedTo)}`)
 
+                createContract(contractAwardedTo, contract);
 
                 keepGoing = false;
 
