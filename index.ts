@@ -3,7 +3,7 @@ import { Mp } from "./src/models/mps";
 import { Division } from "./src/models/divisions";
 import { createParties } from "./src/nodeManager";
 import { createDonations } from "./src/donationsManager";
-import { createContracts, getContracts } from "./src/contractsManager";
+import { getContracts } from "./src/contractsManager";
 
 const logger = require('./src/logger');
 
@@ -71,6 +71,7 @@ const go = async () => {
     logger.info("CREATING CONTRACTS")
     // createContracts();
     await getContracts()
+    // await getAndDownload()
     endAndPrintTiming(timingStart, 'create contracts');
   }
   

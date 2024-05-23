@@ -331,27 +331,27 @@ export const createContract = async (contractAwardedTo: contractAwardedToNode, c
     const session = driver.session();
 
     //ogganisation could already exist as a donar for example     
-    const contractAwardedToCypher = `
-    MERGE (n:Organisation { Name: $organisationName })
-    SET n.Website = $contactWebsite,
-        n.Address = $contactAddress,
-        n.Email = $contactEmail,
-        n.Country = $contactCountry,
-        n.ContactName = $contactName,
-        n.ContactPhone = $contactPhone,
-        n.ContactTown = $contactTown
-    `;
+    // const contractAwardedToCypher = `
+    // MERGE (n:Organisation { Name: $organisationName })
+    // SET n.Website = $contactWebsite,
+    //     n.Address = $contactAddress,
+    //     n.Email = $contactEmail,
+    //     n.Country = $contactCountry,
+    //     n.ContactName = $contactName,
+    //     n.ContactPhone = $contactPhone,
+    //     n.ContactTown = $contactTown
+    // `;
 
-    const parameters1 = {
-        organisationName: contractAwardedTo.organisationName,
-        contactWebsite: contractAwardedTo.contactWebsite,
-        contactAddress: contractAwardedTo.contactAddress,
-        contactEmail: contractAwardedTo.contactEmail,
-        contactCountry: contractAwardedTo.contactCountry,
-        contactName: contractAwardedTo.contactName,
-        contactPhone: contractAwardedTo.contactPhone,
-        contactTown: contractAwardedTo.contactTown
-    };
+    // const parameters1 = {
+    //     organisationName: contractAwardedTo.organisationName,
+    //     contactWebsite: contractAwardedTo.contactWebsite,
+    //     contactAddress: contractAwardedTo.contactAddress,
+    //     contactEmail: contractAwardedTo.contactEmail,
+    //     contactCountry: contractAwardedTo.contactCountry,
+    //     contactName: contractAwardedTo.contactName,
+    //     contactPhone: contractAwardedTo.contactPhone,
+    //     contactTown: contractAwardedTo.contactTown
+    // };
 
 
     // try {
@@ -361,37 +361,37 @@ export const createContract = async (contractAwardedTo: contractAwardedToNode, c
     //     throw error;  // Re-throw to propagate the error if needed
     // }
 
-    const contractCypher = `
-    MERGE (n:Contract { ContractId: $contractId })
-    SET n.AwardedValue = $awardedValue,
-        n.Title = $title,
-        n.Category = $category,
-        n.Description = $description,
-        n.IsSubContract = $isSubContract,
-        n.IsSuitableForSme = $isSuitableForSme,
-        n.IsSuitableForVco = $isSuitableForVco,
-        n.Region = $region,
-        n.PublishedDate = date($publishedDate),
-        n.EndDate = date($endDate),
-        n.AwardedDate = date($awardedDate),
-        n.IssuedByParties = $issuedByParties
-    `;
+    // const contractCypher = `
+    // MERGE (n:Contract { ContractId: $contractId })
+    // SET n.AwardedValue = $awardedValue,
+    //     n.Title = $title,
+    //     n.Category = $category,
+    //     n.Description = $description,
+    //     n.IsSubContract = $isSubContract,
+    //     n.IsSuitableForSme = $isSuitableForSme,
+    //     n.IsSuitableForVco = $isSuitableForVco,
+    //     n.Region = $region,
+    //     n.PublishedDate = date($publishedDate),
+    //     n.EndDate = date($endDate),
+    //     n.AwardedDate = date($awardedDate),
+    //     n.IssuedByParties = $issuedByParties
+    // `;
 
-    const parameters2 = {
-        contractId: contract.contractId,
-        title: contract.title,
-        awardedValue: contract.awardedValue,
-        category: contract.category,
-        description: contract.description,
-        isSubContract: contract.isSubContract,
-        isSuitableForSme: contract.isSuitableForSme,
-        isSuitableForVco: contract.isSuitableForVco,
-        region: contract.region,
-        publishedDate: contract.publishedDate, // Assuming already in "YYYY-MM-DDTHH:mm:ss[.sss][Z]" format
-        endDate: contract.endDate, // Use your formatDate function from previous answers
-        awardedDate: contract.awardedDate,
-        issuedByParties: contract.issuedByParties // Pass the array directly
-    };
+    // const parameters2 = {
+    //     contractId: contract.contractId,
+    //     title: contract.title,
+    //     awardedValue: contract.awardedValue,
+    //     category: contract.category,
+    //     description: contract.description,
+    //     isSubContract: contract.isSubContract,
+    //     isSuitableForSme: contract.isSuitableForSme,
+    //     isSuitableForVco: contract.isSuitableForVco,
+    //     region: contract.region,
+    //     publishedDate: contract.publishedDate, // Assuming already in "YYYY-MM-DDTHH:mm:ss[.sss][Z]" format
+    //     endDate: contract.endDate, // Use your formatDate function from previous answers
+    //     awardedDate: contract.awardedDate,
+    //     issuedByParties: contract.issuedByParties // Pass the array directly
+    // };
 
     // try {
     //     const result2 = await session.run(contractCypher, parameters2);
@@ -402,14 +402,14 @@ export const createContract = async (contractAwardedTo: contractAwardedToNode, c
     // }
 
 
-    const recievedContractRelCypher = `MATCH (org:Organisation { Name: "${contractAwardedTo.organisationName}"}) MATCH (con:Contract {ContractId: "${contractAwardedTo.contractId}"}) CREATE (con)-[:AWARDED { AwardedDate: date("${contract.awardedDate}") }]->(org)`;
+    // const recievedContractRelCypher = `MATCH (org:Organisation { Name: "${contractAwardedTo.organisationName}"}) MATCH (con:Contract {ContractId: "${contractAwardedTo.contractId}"}) CREATE (con)-[:AWARDED { AwardedDate: date("${contract.awardedDate}") }]->(org)`;
     // await runCypher(recievedContractRelCypher, session);
 
     //if more than 1 party was in power at the time create relationship for each party 
-    for (let partyName of contract.issuedByParties) {
-        const issuedContractRelCypher = `MATCH (party:Party { partyName: "${partyName}"}) MATCH (con:Contract { ContractId: "${contractAwardedTo.contractId}"}) CREATE (party)-[:TENDERED { PublishedDate: date("${contract.publishedDate}") }]->(con)`;
-        // await runCypher(issuedContractRelCypher, session);
-    }
+    // for (let partyName of contract.issuedByParties) {
+    //     const issuedContractRelCypher = `MATCH (party:Party { partyName: "${partyName}"}) MATCH (con:Contract { ContractId: "${contractAwardedTo.contractId}"}) CREATE (party)-[:TENDERED { PublishedDate: date("${contract.publishedDate}") }]->(con)`;
+    //     // await runCypher(issuedContractRelCypher, session);
+    // }
 
     // logger.info(`Created neo data for contract ${contract.title}`)
 
