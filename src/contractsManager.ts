@@ -1,35 +1,66 @@
 
 const logger = require('./logger');
-
-import { contractAwardedToNode, contractNode, issuedContractRelationship, recievedContractRelationship } from "./models/contracts";
-import fs from 'fs';
-import { parse } from '@fast-csv/parse';
-import { createContract } from "./neoManager";
+import { log } from "console";
 import { getCategory } from "./utils/categoryManager";
-
+const fs = require('fs');
+const { stringify } = require('csv-stringify');
+const { Readable } = require('stream');
 const cheerio = require('cheerio');
 
-const CONSERVATIVE = "Conservative";
-const LABOUR = "Labour";
-const LIBERAL = "Liberal Democrat";
-
 const partyInPower = [
-    { parties: ["Labour"], fromDate: new Date("1997-05-02"), toDate: new Date("2010-05-11") },
-    { parties: ["Conservative", "Liberal Democrat"], fromDate: new Date("2010-05-11"), toDate: new Date("2015-05-08") },
-    { parties: ["Conservative"], fromDate: new Date("2015-05-08"), toDate: new Date("2025-01-28") },
+    { parties: "Labour", fromDate: new Date("1997-05-02"), toDate: new Date("2010-05-11") },
+    { parties: "Conservative,Liberal Democrat", fromDate: new Date("2010-05-11"), toDate: new Date("2015-05-08") },
+    { parties: "Conservative", fromDate: new Date("2015-05-08"), toDate: new Date("2025-01-28") },
 ];
 
-const endAndPrintTiming = (timingStart: number, timingName: string) => {
+const COLUMNS = [
+    'id',
+    'title',
+    'supplier',
+    'description',
+    'publishedDate',
+    'awardedDate',
+    'awardedValue',
+    'issuedByParties',
+    'category',
+    'industry',
+    'link',
+    'location',
+    'awardedTo'
+]
 
+const writeCsv = async (data: Array<any>, pageNumber: number) => {
+
+    const fromPage = pageNumber -10;
+    const csvStream = stringify({ header: true, columns: COLUMNS });
+    const writeStream = fs.createWriteStream(`output/contracts_2015_${fromPage}_${pageNumber}.csv`)
+    const contractStream = Readable.from(data);
+
+    return new Promise((resolve, reject) => { // Create a Promise
+        contractStream
+            .pipe(csvStream)
+            .pipe(writeStream)
+            .on('error', reject) // Reject the promise on error
+            .on('finish', resolve); // Resolve the promise when finished
+    });
+
+
+    // contractStream
+    //     .pipe(csvStream)
+    //     .pipe(writeStream)
+    //     // @ts-ignore
+    //     .on('error', (err) => console.error('Error writing CSV:', err));
+}
+
+const endAndPrintTiming = (timingStart: number, timingName: string) => {
     let timingEnd = performance.now();
     const elapsedSeconds = (timingEnd - timingStart) / 1000;
     const minutes = elapsedSeconds / 60;
     logger.info(`<<TIMING>> ${timingName} in ${minutes.toFixed(2)} minutes`);
-
 }
 
 
-const getPartyFromIssueDate = (issuedDate: string): Array<string> => {
+const getPartyFromIssueDate = (issuedDate: string): string => {
 
     const targetDate = new Date(issuedDate.split('/').reverse().join('-'));
 
@@ -42,7 +73,7 @@ const getPartyFromIssueDate = (issuedDate: string): Array<string> => {
         }
     }
 
-    return [];
+    return "";
 
 }
 
@@ -51,7 +82,22 @@ const formatDate = (dateStr: string) => {
     return `${year}-${month}-${day}`;
 }
 
+const extractContractId = (linkId: string) => {
+
+    const parts = linkId.split('/');
+    const lastPart = parts.pop();
+    // @ts-ignore
+    const contractId = lastPart.split('?')[0];
+
+    return contractId;
+}
+
+
 export const getContracts = async () => {
+
+    const cookie = "CF_COOKIES_PREFERENCES_SET=1; CF_AUTH=3odnc5udu0rolkvnbiu2io2vn5; CF_PAGE_TIMEOUT=1716562767371";
+
+    const rows = [];
 
     let timingStart = performance.now();
 
@@ -67,8 +113,6 @@ export const getContracts = async () => {
             url = `https://www.contractsfinder.service.gov.uk/Search/Results?&page=${page}`
         }
 
-        const cookie = "CF_AUTH=tngqld6kba6jcnjvbi2v1ups56; CF_COOKIES_PREFERENCES_SET=1; CF_PAGE_TIMEOUT=1716481766854";
-
         logger.info(`PAGE ${page} - ${url}`)
 
         //make a query on the webside for what we need then set this cookie
@@ -80,26 +124,12 @@ export const getContracts = async () => {
         // Get all div elements with a specific class name
         const contracts = $('.search-result');
 
+        if (!contracts.length) {
+            logger.info(`No conntracts left so ending`)
+            keepGoing = false;
+        }
         // @ts-ignore
         for (const div of contracts) {
-
-            const contract: contractNode = {
-                title: "",
-                supplier: "",
-                description: "",
-                publishedDate: "",
-                awardedDate: "",
-                awardedValue: 0,
-                issuedByParties: [],
-                category: "",
-                industry: "",
-                link: "",
-                location: ""
-            };
-            const contractAwardedTo: contractAwardedToNode = {
-                name: ""
-            };
-
 
             const stage = $(div).find(':nth-child(6)').text().trim();
 
@@ -107,7 +137,7 @@ export const getContracts = async () => {
 
                 const title = $(div).find('.search-result-header h2 a').text().trim();
                 const link = $(div).find('.search-result-header h2 a').attr('href');
-                const orgName = $(div).find('.search-result-sub-header').text().trim();
+                const supplier = $(div).find('.search-result-sub-header').text().trim();
                 const description = $(div).find(':nth-child(4)').text().replace(/^\s*[\r\n]/gm, '');
                 const location = $(div).find(':nth-child(7)').text().trim().split(" ")[2];
                 const value = $(div).find(':nth-child(8)').text().trim().split(" ")[2];
@@ -124,10 +154,7 @@ export const getContracts = async () => {
 
                 const $1 = cheerio.load(resultBody);
                 const industry = $1('.content-block ul li p').text();
-
-
                 const titles = $1('#content-holder-left .content-block h3');
-
 
                 // get all the details for the contract and find the index of the Award information one so we can extract awarded date from here 
                 // @ts-ignore
@@ -138,35 +165,34 @@ export const getContracts = async () => {
 
                 const awardInfoIndex = titleArray.indexOf('Award information');
 
-
                 const awardedDate = $1(`#content-holder-left .content-block:nth-child(${awardInfoIndex + 3})`).find('p').eq(0).text();
 
-                contract.title = title;
-                contract.description = description;
-                contract.link = link;
-                contract.supplier = orgName;
-                contract.category = getCategory(title);
-                contract.industry = industry;
-                contract.location = location;
-                contract.awardedValue = awardedValue;
-                contract.publishedDate = publishedDate;
-                contract.awardedDate = awardedDate;
-                contract.issuedByParties = getPartyFromIssueDate(awardedDate),
+                const row = {
+                    id: extractContractId(link),
+                    title: title,
+                    supplier: supplier,
+                    description: description,
+                    publishedDate: publishedDate,
+                    awardedDate: awardedDate,
+                    awardedValue: awardedValue,
+                    issuedByParties: getPartyFromIssueDate(awardedDate),
+                    category: getCategory(title),
+                    industry: industry,
+                    link: link,
+                    location: location,
+                    awardedTo: awardedTo
+                }
 
-                    contractAwardedTo.name = awardedTo;
+                rows.push(row);
 
-                logger.info(`contract ${JSON.stringify(contract)}`)
-                logger.info(`contractAwardedTo ${JSON.stringify(contractAwardedTo)}`)
+                // logger.info(row);
 
-                createContract(contractAwardedTo, contract);
-
-                createdCount = createdCount+1;
-
-                keepGoing = false;
+                createdCount = createdCount + 1;
 
             } else {
+                keepGoing = false;
                 logger.info(`Created ${createdCount} contracts`)
-                endAndPrintTiming(timingStart, 'create contracts');                
+                endAndPrintTiming(timingStart, 'create contracts');
                 logger.error(`Got stage of ${stage} token expired`);
                 throw new Error("Session has expired")
             }
@@ -174,80 +200,20 @@ export const getContracts = async () => {
 
         page = page + 1;
 
+        if (page % 10 === 0) {
+            await writeCsv(rows, page);
+            rows.length = 0;
+        }
+
+
     }
 
+    keepGoing = false;
     logger.info(`Created ${createdCount} contracts`)
-    endAndPrintTiming(timingStart, 'create contracts complete');                
+    endAndPrintTiming(timingStart, 'create contracts complete');
+
+
+
     logger.info("The end")
 }
-
-// export const createContracts = async (filename = "aa.csv") => {
-
-//     const stream = fs.createReadStream(filename, { encoding: 'utf8' });
-//     const created: Array<string> = [];
-
-//     const parser = parse({ headers: true })  // Assuming your CSV has headers
-//         .on('error', error => console.error(error))
-//         .on('data', row => {
-
-//             const publishedDate = row['Published Date'].substring(0, 10);
-
-//             // console.log("Got row of ", row);
-//             const contract: contractNode = {
-//                 contractId: row['Notice Identifier'],
-//                 title: row['Title'],
-//                 description: row['Description'].substring(0, 200),
-//                 region: row['Region'],
-//                 publishedDate: publishedDate,
-//                 startDate: formatDate(row['Start Date']),
-//                 endDate: formatDate(row['End Date']),
-//                 awardedDate: formatDate(row['Awarded Date']),
-//                 awardedValue: row['Awarded Value'],
-//                 isSubContract: row['Is sub-contract'] === "Yes" ? true : false,
-//                 isSuitableForSme: row['Suitable for SME'] === "Yes" ? true : false,
-//                 isSuitableForVco: row['Suitable for VCO'] === "Yes" ? true : false,
-//                 issuedByParties: getPartyFromIssueDate(row['Awarded Date']),
-//                 category: getCategory(row['Title'])
-//             }
-
-//             const contractAwardedTo: contractAwardedToNode = {
-//                 contractId: row['Notice Identifier'],
-//                 organisationName: row['Organisation Name'],
-//                 contactName: row['Contact Name'],
-//                 contactEmail: row['Contact Email'],
-//                 contactAddress: row['Contact Address 1'],
-//                 contactTown: row['Contact Town'],
-//                 contactPostcode: row['Contact Postcode'],
-//                 contactCountry: row['Contact Country'],
-//                 contactPhone: row['Contact Telephone'],
-//                 contactWebsite: row['Contact Website'],
-//             }
-
-//             const recievedContract: recievedContractRelationship = {
-//                 awardedDate: row['Awarded Date'],
-//             }
-
-//             const issuedContract: issuedContractRelationship = {
-//                 awardedDate: row['Awarded Date'],
-//             }
-
-//             createContract(contractAwardedTo, contract, recievedContract, issuedContract);
-
-//             created.push(row['Title'])
-
-//         })
-//         // @ts-ignore
-//         .on('end', rc => {
-
-//             created.forEach(i => console.log(i));
-//             console.log(`Parsed ${rc} and ${created.length} rows`)
-//         });
-
-//     stream.pipe(parser);
-
-
-
-
-// }
-
 

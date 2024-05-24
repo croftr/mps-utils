@@ -74,7 +74,7 @@ export const getCategory = (title: string): string => {
         return "Children"
     }
 
-    logger.warn("Cant find a category for " + title)
+    // logger.warn("Cant find a category for " + title)
  
     return 'Other';
 }
