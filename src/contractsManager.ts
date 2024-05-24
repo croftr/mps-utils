@@ -1,6 +1,6 @@
 
 const logger = require('./logger');
-import { log } from "console";
+const path = require('path');
 import { getCategory } from "./utils/categoryManager";
 const fs = require('fs');
 const { stringify } = require('csv-stringify');
@@ -29,11 +29,31 @@ const COLUMNS = [
     'awardedTo'
 ]
 
+const getAwardedValue = (awardedValueText:string, title:string, publishedDate:string) => {
+    try {        
+        const value = awardedValueText.trim().split(" ")[2];                
+        const cleanedStr = value.replace(/[^0-9.]/g, '');
+        const awardedValue = Number(cleanedStr);
+        return awardedValue
+    } catch (error) {
+        logger.error(`Failed to get awarded value from ${awardedValueText}`)                                
+        logger.error(`Failed for contract ${title} ${publishedDate}`)                                
+        console.error(error);
+        return 0;        
+    }
+    
+}
+
+
 const writeCsv = async (data: Array<any>, pageNumber: number) => {
 
-    const fromPage = pageNumber -10;
+    const fromPage = pageNumber - 50;
+    const outputDir = 'output'; // Set the output directory name
+    const filename = `contracts_2015_${fromPage}_${pageNumber}.csv`
+    const filePath = path.join(outputDir, filename);
+
     const csvStream = stringify({ header: true, columns: COLUMNS });
-    const writeStream = fs.createWriteStream(`output/contracts_2015_${fromPage}_${pageNumber}.csv`)
+    const writeStream = fs.createWriteStream(filePath)
     const contractStream = Readable.from(data);
 
     return new Promise((resolve, reject) => { // Create a Promise
@@ -44,12 +64,6 @@ const writeCsv = async (data: Array<any>, pageNumber: number) => {
             .on('finish', resolve); // Resolve the promise when finished
     });
 
-
-    // contractStream
-    //     .pipe(csvStream)
-    //     .pipe(writeStream)
-    //     // @ts-ignore
-    //     .on('error', (err) => console.error('Error writing CSV:', err));
 }
 
 const endAndPrintTiming = (timingStart: number, timingName: string) => {
@@ -95,7 +109,7 @@ const extractContractId = (linkId: string) => {
 
 export const getContracts = async () => {
 
-    const cookie = "CF_COOKIES_PREFERENCES_SET=1; CF_AUTH=3odnc5udu0rolkvnbiu2io2vn5; CF_PAGE_TIMEOUT=1716562767371";
+    const cookie = "CF_COOKIES_PREFERENCES_SET=1; CF_AUTH=3odnc5udu0rolkvnbiu2io2vn5; CF_PAGE_TIMEOUT=1716576945350";
 
     const rows = [];
 
@@ -126,6 +140,7 @@ export const getContracts = async () => {
 
         if (!contracts.length) {
             logger.info(`No conntracts left so ending`)
+            await writeCsv(rows, page);
             keepGoing = false;
         }
         // @ts-ignore
@@ -140,11 +155,12 @@ export const getContracts = async () => {
                 const supplier = $(div).find('.search-result-sub-header').text().trim();
                 const description = $(div).find(':nth-child(4)').text().replace(/^\s*[\r\n]/gm, '');
                 const location = $(div).find(':nth-child(7)').text().trim().split(" ")[2];
-                const value = $(div).find(':nth-child(8)').text().trim().split(" ")[2];
-                const cleanedStr = value.replace(/[^0-9.]/g, '');
-                const awardedValue = Number(cleanedStr);
+                                                
+
                 const awardedTo = $(div).find(':nth-child(9)').text().split(" ").slice(2).join(" ");
                 const publishedDate = $(div).find(':nth-child(10)').text().split(" ").slice(2).join(" ");;
+
+                const awardedValue = getAwardedValue($(div).find(':nth-child(8)').text(), title, publishedDate);     
 
                 logger.info(`Get details ${link}`);
 
@@ -184,9 +200,6 @@ export const getContracts = async () => {
                 }
 
                 rows.push(row);
-
-                // logger.info(row);
-
                 createdCount = createdCount + 1;
 
             } else {
@@ -200,19 +213,16 @@ export const getContracts = async () => {
 
         page = page + 1;
 
-        if (page % 10 === 0) {
+        if (page % 50 === 0) {
             await writeCsv(rows, page);
             rows.length = 0;
         }
-
 
     }
 
     keepGoing = false;
     logger.info(`Created ${createdCount} contracts`)
     endAndPrintTiming(timingStart, 'create contracts complete');
-
-
 
     logger.info("The end")
 }
