@@ -37,6 +37,7 @@ export type issuedContractRelationship = {
 }
 
 export type contractNode = {    
+    id: string,
     title: string,
     supplier: string,
     description: string,    

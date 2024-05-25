@@ -2,10 +2,14 @@
 const logger = require('./logger');
 const path = require('path');
 import { getCategory } from "./utils/categoryManager";
+import { parse } from '@fast-csv/parse';
 const fs = require('fs');
 const { stringify } = require('csv-stringify');
 const { Readable } = require('stream');
 const cheerio = require('cheerio');
+
+import { contractNode, contractAwardedToNode } from "././models/contracts";
+import { createContract } from "./neoManager";
 
 const partyInPower = [
     { parties: "Labour", fromDate: new Date("1997-05-02"), toDate: new Date("2010-05-11") },
@@ -47,9 +51,13 @@ const getAwardedValue = (awardedValueText:string, title:string, publishedDate:st
 
 const writeCsv = async (data: Array<any>, pageNumber: number) => {
 
+    const pagePickup = 0;
+
+    pageNumber = pageNumber + pagePickup;
+
     const fromPage = pageNumber - 50;
     const outputDir = 'output'; // Set the output directory name
-    const filename = `contracts_2015_${fromPage}_${pageNumber}.csv`
+    const filename = `contracts_2018_${fromPage}_${pageNumber}.csv`
     const filePath = path.join(outputDir, filename);
 
     const csvStream = stringify({ header: true, columns: COLUMNS });
@@ -109,7 +117,7 @@ const extractContractId = (linkId: string) => {
 
 export const getContracts = async () => {
 
-    const cookie = "CF_COOKIES_PREFERENCES_SET=1; CF_AUTH=3odnc5udu0rolkvnbiu2io2vn5; CF_PAGE_TIMEOUT=1716576945350";
+    const cookie = "CF_COOKIES_PREFERENCES_SET=1; CF_AUTH=3odnc5udu0rolkvnbiu2io2vn5; CF_PAGE_TIMEOUT=1716631258681";
 
     const rows = [];
 
@@ -227,3 +235,47 @@ export const getContracts = async () => {
     logger.info("The end")
 }
 
+export const createContracts = async (filename = "aa.csv") => {
+
+    const stream = fs.createReadStream(filename, { encoding: 'utf8' });
+    const created: Array<string> = [];
+
+    const parser = parse({ headers: true })  // Assuming your CSV has headers
+        .on('error', error => console.error(error))
+        .on('data', row => {
+
+            const publishedDate = row['Published Date'].substring(0, 10);
+
+            // console.log("Got row of ", row);
+            const contract: contractNode = {
+                id: row['id'],
+                title: row['title'],
+                supplier: row['supplier'],
+                description: row['description'].substring(0, 200),                
+                publishedDate: row['publishedDate'],                
+                awardedDate: formatDate(row['awardedDate']),
+                awardedValue: row['awardedValue'],                
+                issuedByParties: getPartyFromIssueDate(row['issuedByParties']).split(','),
+                category: row['category'],
+                industry: row['industry'],
+                link: row['link'],
+                location: row['location'],                
+            }
+
+            const contractAwardedTo: contractAwardedToNode = {
+                name: row['awardedTo'],                                
+            }
+
+            createContract(contractAwardedTo, contract);
+
+            
+        })
+        // @ts-ignore
+        .on('end', rc => {
+            created.forEach(i => logger.info(`Processed ${rc} rows`));            
+        });
+
+    stream.pipe(parser);
+
+
+}
