@@ -389,7 +389,7 @@ export const createContract = async (contractAwardedTo: contractAwardedToNode, c
     }
 
 
-    const recievedContractRelCypher = `MATCH (org:Organisation { Name: "${contractAwardedTo.name}"}) MATCH (con:Contract {ContractId: "${contract.id}"}) CREATE (con)-[:AWARDED { AwardedDate: date("${contract.awardedDate}") }]->(org)`;
+    const recievedContractRelCypher = `MATCH (org:Organisation { Name: "${contractAwardedTo.name}"}) MATCH (con:Contract {ContractId: "${contract.id}"}) CREATE (con)<-[:AWARDED { AwardedDate: date("${contract.awardedDate}") }]-(org)`;
     await runCypher(recievedContractRelCypher, session);
 
     // if more than 1 party was in power at the time create relationship for each party 

@@ -7,9 +7,12 @@ const fs = require('fs');
 const { stringify } = require('csv-stringify');
 const { Readable } = require('stream');
 const cheerio = require('cheerio');
+const { DateTime } = require("luxon");
 
 import { contractNode, contractAwardedToNode } from "././models/contracts";
 import { createContract } from "./neoManager";
+
+const CSV_SIZE = 50;
 
 const partyInPower = [
     { parties: "Labour", fromDate: new Date("1997-05-02"), toDate: new Date("2010-05-11") },
@@ -33,19 +36,19 @@ const COLUMNS = [
     'awardedTo'
 ]
 
-const getAwardedValue = (awardedValueText:string, title:string, publishedDate:string) => {
-    try {        
-        const value = awardedValueText.trim().split(" ")[2];                
+const getAwardedValue = (awardedValueText: string, title: string, publishedDate: string) => {
+    try {
+        const value = awardedValueText.trim().split(" ")[2];
         const cleanedStr = value.replace(/[^0-9.]/g, '');
         const awardedValue = Number(cleanedStr);
         return awardedValue
     } catch (error) {
-        logger.error(`Failed to get awarded value from ${awardedValueText}`)                                
-        logger.error(`Failed for contract ${title} ${publishedDate}`)                                
+        logger.error(`Failed to get awarded value from ${awardedValueText}`)
+        logger.error(`Failed for contract ${title} ${publishedDate}`)
         console.error(error);
-        return 0;        
+        return 0;
     }
-    
+
 }
 
 
@@ -55,9 +58,9 @@ const writeCsv = async (data: Array<any>, pageNumber: number) => {
 
     pageNumber = pageNumber + pagePickup;
 
-    const fromPage = pageNumber - 50;
+    const fromPage = pageNumber - CSV_SIZE;
     const outputDir = 'output'; // Set the output directory name
-    const filename = `contracts_2018_${fromPage}_${pageNumber}.csv`
+    const filename = `contracts_2020_${fromPage}_${pageNumber}.csv`
     const filePath = path.join(outputDir, filename);
 
     const csvStream = stringify({ header: true, columns: COLUMNS });
@@ -117,7 +120,10 @@ const extractContractId = (linkId: string) => {
 
 export const getContracts = async () => {
 
-    const cookie = "CF_COOKIES_PREFERENCES_SET=1; CF_AUTH=3odnc5udu0rolkvnbiu2io2vn5; CF_PAGE_TIMEOUT=1716637671610";
+    const cookie = "CF_COOKIES_PREFERENCES_SET=1; CF_AUTH=3odnc5udu0rolkvnbiu2io2vn5; CF_PAGE_TIMEOUT=1716657914568";
+
+    const ACCEPTED_ERROR_COUNT = 10
+    let errorCount = 0;
 
     const rows = [];
 
@@ -155,20 +161,21 @@ export const getContracts = async () => {
         for (const div of contracts) {
 
             const stage = $(div).find(':nth-child(6)').text().trim();
+            const title = $(div).find('.search-result-header h2 a').text().trim();
+            const link = $(div).find('.search-result-header h2 a').attr('href');
 
-            if (stage === "Procurement stage Awarded contract") {
+            if (stage.includes("Awarded contract")) {
 
                 const title = $(div).find('.search-result-header h2 a').text().trim();
                 const link = $(div).find('.search-result-header h2 a').attr('href');
                 const supplier = $(div).find('.search-result-sub-header').text().trim();
                 const description = $(div).find(':nth-child(4)').text().replace(/^\s*[\r\n]/gm, '');
                 const location = $(div).find(':nth-child(7)').text().trim().split(" ")[2];
-                                                
 
                 const awardedTo = $(div).find(':nth-child(9)').text().split(" ").slice(2).join(" ");
                 const publishedDate = $(div).find(':nth-child(10)').text().split(" ").slice(2).join(" ");;
 
-                const awardedValue = getAwardedValue($(div).find(':nth-child(8)').text(), title, publishedDate);     
+                const awardedValue = getAwardedValue($(div).find(':nth-child(8)').text(), title, publishedDate);
 
                 logger.info(`Get details ${link}`);
 
@@ -211,17 +218,32 @@ export const getContracts = async () => {
                 createdCount = createdCount + 1;
 
             } else {
-                keepGoing = false;
-                logger.info(`Created ${createdCount} contracts`)
-                endAndPrintTiming(timingStart, 'create contracts');
-                logger.error(`Got stage of ${stage} token expired`);
-                throw new Error("Session has expired")
+
+                if (!stage) { // have found the odd blank stage, just move on 
+                    logger.warn(`Got blank stage for ${$(div).find('.search-result-header h2 a').text().trim()}`)
+                    continue;
+                } else {
+                    errorCount = errorCount+1;
+                    if (errorCount = ACCEPTED_ERROR_COUNT) {
+                        errorCount = 0;
+                        keepGoing = false;
+                        logger.info(`Created ${createdCount} contracts`)
+                        endAndPrintTiming(timingStart, 'create contracts');
+                        logger.error(`Got stage of ${stage} for ${title} possible token expired. ${link}`);
+                        throw new Error("Session has expired")
+                    } else {
+                        errorCount = 0;                        
+                        logger.info(`Created ${createdCount} contracts`)                        
+                        logger.error(`Got stage of ${stage} for ${title} possible token expired. ${link}`);
+                        continue;
+                    }                    
+                }
             }
         };
 
         page = page + 1;
 
-        if (page % 50 === 0) {
+        if (page % CSV_SIZE === 0) {
             await writeCsv(rows, page);
             rows.length = 0;
         }
@@ -235,17 +257,17 @@ export const getContracts = async () => {
     logger.info("The end")
 }
 
-const extractPublishedDate = (dateString:string, previousdDate:string) => {
-    
+const extractPublishedDate = (dateString: string, previousdDate: string) => {
+
     try {
         const pd = dateString.split(',')[0] //some published dates have an edit comment next to them like this - "11 December 2017, last edited 11 December 2017" 
 
         //verify whe have a valud date
         const dateCheck = new Date(pd);
-        const isValid =  !isNaN(dateCheck.getTime());
+        const isValid = !isNaN(dateCheck.getTime());
 
         if (!isValid) {
-            throw new Error(`Invalid date ${dateCheck}` )
+            throw new Error(`Invalid date ${dateCheck}`)
         }
 
         return pd;
@@ -254,55 +276,94 @@ const extractPublishedDate = (dateString:string, previousdDate:string) => {
         logger.error(`Failed to work out published date from ${dateString} so using previous date`)
         return previousdDate;
     }
-    
+
 }
 
-export const createContracts = async (filename = "aa.csv") => {
+export const createContracts = async () => {
 
-    const stream = fs.createReadStream(filename, { encoding: 'utf8' });
-    const created: Array<string> = [];
-    let previousPublishedDate:string;
+    const csvDirectoryPath = './output';
+    
+    // @ts-ignore
+    fs.readdir(csvDirectoryPath, (err, files) => {
 
-    const parser = parse({ headers: true })  // Assuming your CSV has headers
-        .on('error', error => console.error(error))
-        .on('data', row => {
+        if (err) throw err;
 
-            const date = row['publishedDate'].substring(0, 10);            
+        files
+            // @ts-ignore
+            .filter(file => file.endsWith('.csv'))
+            // @ts-ignore
+            .forEach(file => {
+                const cleanedFile:Array<any> = [];
+                console.log(`got file ${file}`);
+                let lastValidDate:string;
+                const parser = parse({ headers: true }); // Parse into objects
+                fs.createReadStream(`${csvDirectoryPath}/${file}`)
+                    .pipe(parser)
+                    // @ts-ignore
+                    .on('data', async (row) => {
+                        try {
+                            const cleanRow = { ...row }; // Copy the row
+                        
+                            for (const key of Object.keys(row)) {
+                                if (key.toLowerCase().includes('date')) {
+                                    
+                                    const dateToFormat = row[key].split(",")[0].trim();                                                                                                                                                                                    
+                                    const date = DateTime.fromFormat(dateToFormat, 'd MMMM yyyy');
+                                                                                                            
+                                    if (date.isValid) {
+                                        cleanRow[key] = date.toISODate();
+                                        lastValidDate = date.toISODate();                                                                                
+                                    } else {
+                                        //if the date is too messed up set it to the last date we used as they are in date order so should be same of very close
+                                        console.warn(`Invalid date format in column ${key}:`, row[key]);
+                                        cleanRow[key] = lastValidDate;
+                                    }
+                                } 
+
+                            }
+                            // @ts-ignore
+                            cleanedFile.push(cleanRow);
+
+
+                            const contract: contractNode = {
+                                id: row['id'],
+                                title: row['title'],
+                                supplier: row['supplier'],
+                                description: row['description'].substring(0, 200),
+                                publishedDate: cleanRow["publishedDate"],
+                                awardedDate: cleanRow['awardedDate'],
+                                awardedValue: Number(row['awardedValue']),
+                                issuedByParties: row['issuedByParties'].split(','),
+                                category: row['category'],
+                                industry: row['industry'],
+                                link: row['link'],
+                                location: row['location'],
+                            }
+                
+                            const contractAwardedTo: contractAwardedToNode = {
+                                name: row['awardedTo'],
+                            }
+
+                            console.log(contract);
+                            console.log("=================================");                            
+                            console.log(contractAwardedTo);
+                            
+                
+                            // createContract(contractAwardedTo, contract);
+
+                            // console.log(`got row ${JSON.stringify(row)}`);
+                        } catch (error) {
+                            console.error(`Error adding item from ${file}:`, error);
+                        }                        
+                    })                    
+                    .on('end', () => {
+                        console.log(`Finished processing ${file}`);
+                        // cleanedFile.forEach(row => console.log(row));        
+                        // console.log(cleanedFile[0]);
+                        cleanedFile.length = 0;
+                    });
+                                                            
+            });
             
-            const publishedDate = extractPublishedDate(date, previousPublishedDate);
-
-            // console.log("Got row of ", row);
-            const contract: contractNode = {
-                id: row['id'],
-                title: row['title'],
-                supplier: row['supplier'],
-                description: row['description'].substring(0, 200),                
-                publishedDate: publishedDate,
-                awardedDate: formatDate(row['awardedDate']),
-                awardedValue: row['awardedValue'],                
-                issuedByParties: getPartyFromIssueDate(row['issuedByParties']).split(','),
-                category: row['category'],
-                industry: row['industry'],
-                link: row['link'],
-                location: row['location'],                
-            }
-
-            const contractAwardedTo: contractAwardedToNode = {
-                name: row['awardedTo'],                                
-            }
-
-            createContract(contractAwardedTo, contract);
-
-            previousPublishedDate = publishedDate;
-
-            
-        })
-        // @ts-ignore
-        .on('end', rc => {
-            created.forEach(i => logger.info(`Processed ${rc} rows`));            
-        });
-
-    stream.pipe(parser);
-
-
+    });
 }
