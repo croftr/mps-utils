@@ -117,7 +117,7 @@ const extractContractId = (linkId: string) => {
 
 export const getContracts = async () => {
 
-    const cookie = "CF_COOKIES_PREFERENCES_SET=1; CF_AUTH=3odnc5udu0rolkvnbiu2io2vn5; CF_PAGE_TIMEOUT=1716631258681";
+    const cookie = "CF_COOKIES_PREFERENCES_SET=1; CF_AUTH=3odnc5udu0rolkvnbiu2io2vn5; CF_PAGE_TIMEOUT=1716637671610";
 
     const rows = [];
 
@@ -235,16 +235,41 @@ export const getContracts = async () => {
     logger.info("The end")
 }
 
+const extractPublishedDate = (dateString:string, previousdDate:string) => {
+    
+    try {
+        const pd = dateString.split(',')[0] //some published dates have an edit comment next to them like this - "11 December 2017, last edited 11 December 2017" 
+
+        //verify whe have a valud date
+        const dateCheck = new Date(pd);
+        const isValid =  !isNaN(dateCheck.getTime());
+
+        if (!isValid) {
+            throw new Error(`Invalid date ${dateCheck}` )
+        }
+
+        return pd;
+
+    } catch (error) {
+        logger.error(`Failed to work out published date from ${dateString} so using previous date`)
+        return previousdDate;
+    }
+    
+}
+
 export const createContracts = async (filename = "aa.csv") => {
 
     const stream = fs.createReadStream(filename, { encoding: 'utf8' });
     const created: Array<string> = [];
+    let previousPublishedDate:string;
 
     const parser = parse({ headers: true })  // Assuming your CSV has headers
         .on('error', error => console.error(error))
         .on('data', row => {
 
-            const publishedDate = row['Published Date'].substring(0, 10);
+            const date = row['publishedDate'].substring(0, 10);            
+            
+            const publishedDate = extractPublishedDate(date, previousPublishedDate);
 
             // console.log("Got row of ", row);
             const contract: contractNode = {
@@ -252,7 +277,7 @@ export const createContracts = async (filename = "aa.csv") => {
                 title: row['title'],
                 supplier: row['supplier'],
                 description: row['description'].substring(0, 200),                
-                publishedDate: row['publishedDate'],                
+                publishedDate: publishedDate,
                 awardedDate: formatDate(row['awardedDate']),
                 awardedValue: row['awardedValue'],                
                 issuedByParties: getPartyFromIssueDate(row['issuedByParties']).split(','),
@@ -267,6 +292,8 @@ export const createContracts = async (filename = "aa.csv") => {
             }
 
             createContract(contractAwardedTo, contract);
+
+            previousPublishedDate = publishedDate;
 
             
         })
