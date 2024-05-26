@@ -12,7 +12,7 @@ let CONNECTION_STRING = `bolt://${process.env.DOCKER_HOST}:7687`;
 let driver: any;
 
 const runCypher = async (cypher: string, session: any) => {
-    logger.trace(cypher);
+    logger.debug(cypher);
     try {
         const result = await session.run(cypher);
         return result;
@@ -323,86 +323,128 @@ export const batchDelete = async () => {
     }
 }
 
-export const createContract = async (contractAwardedTo: contractAwardedToNode, contract: contractNode) => {
+// @ts-ignore
+export const createContract = async (contractAwardedTo: contractAwardedToNode, contract: contractNode, session) => {
 
-    CONNECTION_STRING = `bolt://${process.env.DOCKER_HOST}:7687`;
+    // const driver = neo4j.driver(CONNECTION_STRING, neo4j.auth.basic(process.env.NEO4J_USER || '', process.env.NEO4J_PASSWORD || ''));
 
-    driver = neo4j.driver(CONNECTION_STRING, neo4j.auth.basic(process.env.NEO4J_USER || '', process.env.NEO4J_PASSWORD || ''));
-    const session = driver.session();
-
-    //ogganisation could already exist as a donar for example     
-    const contractAwardedToCypher = `
-    MERGE (n:Organisation { Name: $organisationName })
-    SET n.hasHadContract = $hasHadContract 
+    // Combine queries for better performance
+    const combinedCypher = `
+        MERGE (org:Organisation { Name: $organisationName })
+        SET org.hasHadContract = $hasHadContract 
+        MERGE (con:Contract { ContractId: $contractId })
+        SET con.AwardedValue = $awardedValue,
+            con.Title = $title,
+            con.Category = $category,
+            con.Description = $description,
+            con.PublishedDate = date($publishedDate),
+            con.AwardedDate = date($awardedDate),
+            con.Supplier = $supplier,
+            con.Industry = $industry,
+            con.Link = $link,
+            con.Location = $location
+        CREATE (con)-[:AWARDED { AwardedDate: date($awardedDate) }]->(org)
+        WITH con
+        UNWIND $issuedByParties AS partyName
+        MATCH (party:Party { partyName: partyName })
+        CREATE (party)-[:TENDERED { PublishedDate: date($publishedDate) }]->(con)
     `;
 
-    const parameters1 = {
+    const parameters = {
         organisationName: contractAwardedTo.name,
-        hasHadContract: true
-    };
-
-
-    try {
-        const result1 = await session.run(contractAwardedToCypher, parameters1);
-    } catch (error) {
-        console.error("Error creating/updating org:", error);
-        throw error;  // Re-throw to propagate the error if needed
-    }
-
-    const contractCypher = `
-    MERGE (n:Contract { ContractId: $contractId })
-    SET n.AwardedValue = $awardedValue,
-        n.Title = $title,
-        n.Category = $category,
-        n.Description = $description,        
-        n.PublishedDate = date($publishedDate),        
-        n.AwardedDate = date($awardedDate),
-        n.Supplier = $supplier,
-        n.Industry = $industry,
-        n.Link = $link,
-        n.Location = $location        
-    `;
-
-    const parameters2 = {
+        hasHadContract: true,
         contractId: contract.id,
         title: contract.title,
         awardedValue: contract.awardedValue,
         category: contract.category,
-        description: contract.description,        
-        publishedDate: contract.publishedDate,         
+        description: contract.description,
+        publishedDate: contract.publishedDate,
         awardedDate: contract.awardedDate,
-        issuedByParties: contract.issuedByParties,
+        issuedByParties: contract.issuedByParties, // Pass as an array
         supplier: contract.supplier,
         industry: contract.industry,
         link: contract.link,
         location: contract.location
     };
 
-
-
+    // const session = driver.session();
     try {
-        const result2 = await session.run(contractCypher, parameters2);
+        await session.run(combinedCypher, parameters);
+        logger.info(`Created contract ${contract.title} ${contract.publishedDate}`)
     } catch (error) {
-        // Handle errors
-        console.error("Error creating/updating contract:", error);
-        throw error;  // Re-throw to propagate the error if needed
+        console.error("oops ", error)
+    } finally {
+        // await session.close();
     }
+};
+
+// export const createContract = async (contractAwardedTo: contractAwardedToNode, contract: contractNode) => {
+
+//     CONNECTION_STRING = `bolt://${process.env.DOCKER_HOST}:7687`;
+
+//     driver = neo4j.driver(CONNECTION_STRING, neo4j.auth.basic(process.env.NEO4J_USER || '', process.env.NEO4J_PASSWORD || ''));
+//     const session = driver.session();
+
+//     //ogganisation could already exist as a donar for example     
+//     const contractAwardedToCypher = `
+//     MERGE (n:Organisation { Name: $organisationName })
+//     SET n.hasHadContract = $hasHadContract 
+//     `;
+
+//     const parameters1 = {
+//         organisationName: contractAwardedTo.name,
+//         hasHadContract: true
+//     };
 
 
-    const recievedContractRelCypher = `MATCH (org:Organisation { Name: "${contractAwardedTo.name}"}) MATCH (con:Contract {ContractId: "${contract.id}"}) CREATE (con)<-[:AWARDED { AwardedDate: date("${contract.awardedDate}") }]-(org)`;
-    await runCypher(recievedContractRelCypher, session);
+//     await session.run(contractAwardedToCypher, parameters1);
 
-    // if more than 1 party was in power at the time create relationship for each party 
-    for (let partyName of contract.issuedByParties) {
-        const issuedContractRelCypher = `MATCH (party:Party { partyName: "${partyName}"}) MATCH (con:Contract { ContractId: "${contract.id}"}) CREATE (party)-[:TENDERED { PublishedDate: date("${contract.publishedDate}") }]->(con)`;
-        await runCypher(issuedContractRelCypher, session);
-    }
+//     const contractCypher = `
+//     MERGE (n:Contract { ContractId: $contractId })
+//     SET n.AwardedValue = $awardedValue,
+//         n.Title = $title,
+//         n.Category = $category,
+//         n.Description = $description,        
+//         n.PublishedDate = date($publishedDate),        
+//         n.AwardedDate = date($awardedDate),
+//         n.Supplier = $supplier,
+//         n.Industry = $industry,
+//         n.Link = $link,
+//         n.Location = $location        
+//     `;
 
-    logger.info(`Created neo data for contract ${contract.title}`)
+//     const parameters2 = {
+//         contractId: contract.id,
+//         title: contract.title,
+//         awardedValue: contract.awardedValue,
+//         category: contract.category,
+//         description: contract.description,
+//         publishedDate: contract.publishedDate,
+//         awardedDate: contract.awardedDate,
+//         issuedByParties: contract.issuedByParties,
+//         supplier: contract.supplier,
+//         industry: contract.industry,
+//         link: contract.link,
+//         location: contract.location
+//     };
 
-    session.close();  // Close the session when done
 
-}
+//     await session.run(contractCypher, parameters2);
+
+//     const recievedContractRelCypher = `MATCH (org:Organisation { Name: "${contractAwardedTo.name}"}) MATCH (con:Contract {ContractId: "${contract.id}"}) CREATE (con)-[:AWARDED { AwardedDate: date("${contract.awardedDate}") }]->(org)`;
+//     await runCypher(recievedContractRelCypher, session);
+
+//     // if more than 1 party was in power at the time create relationship for each party 
+//     for (let partyName of contract.issuedByParties) {
+//         const issuedContractRelCypher = `MATCH (party:Party { partyName: "${partyName}"}) MATCH (con:Contract { ContractId: "${contract.id}"}) CREATE (party)-[:TENDERED { PublishedDate: date("${contract.publishedDate}") }]->(con)`;
+//         await runCypher(issuedContractRelCypher, session);
+//     }
+
+//     // logger.info(`Created neo data for contract ${contract.title}`)
+
+//     session.close();  // Close the session when done
+
+// }
 
 export const setupDataScience = async () => {
 

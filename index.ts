@@ -1,9 +1,8 @@
 import { setupDataScience, setupNeo, batchDelete } from "./src/neoManager";
 import { Mp } from "./src/models/mps";
-import { Division } from "./src/models/divisions";
 import { createParties } from "./src/nodeManager";
 import { createDonations } from "./src/donationsManager";
-import { getContracts } from "./src/contractsManager";
+import { createContracts, getContracts } from "./src/contractsManager";
 
 const logger = require('./src/logger');
 
@@ -69,9 +68,8 @@ const go = async () => {
 
   if (CREATE_CONTRACTS) {
     logger.info("CREATING CONTRACTS")
-    // createContracts();
-    await getContracts()
-    // await getAndDownload()
+    await createContracts();
+    // await getContracts()    
     endAndPrintTiming(timingStart, 'create contracts');
   }
   
