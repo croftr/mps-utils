@@ -54,3 +54,19 @@ export type contractNode = {
 export type contractAwardedToNode = {
     name: string,    
 }
+
+export type dynamoItem = {
+    id: string,
+    title: string,
+    supplier: string,
+    description: string,    
+    publishedDate: string,    
+    awardedDate: string,
+    awardedValue: number,    
+    issuedByParties: Set<string>,
+    category: string,
+    industry: string,
+    link: string,
+    location: string,
+    awardedTo: string
+}

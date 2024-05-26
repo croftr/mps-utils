@@ -9,8 +9,9 @@ const { Readable } = require('stream');
 const cheerio = require('cheerio');
 const { DateTime } = require("luxon");
 
-import { contractNode, contractAwardedToNode } from "././models/contracts";
+import { contractNode, contractAwardedToNode, dynamoItem } from "././models/contracts";
 import { createContract } from "./neoManager";
+import { addDynamoDbRow } from "./dynamoDBManager";
 
 const CSV_SIZE = 50;
 
@@ -54,7 +55,7 @@ const getAwardedValue = (awardedValueText: string, title: string, publishedDate:
 
 const writeCsv = async (data: Array<any>, pageNumber: number) => {
 
-    const pagePickup = 0;
+    const pagePickup = 1000;
 
     pageNumber = pageNumber + pagePickup;
 
@@ -120,7 +121,7 @@ const extractContractId = (linkId: string) => {
 
 export const getContracts = async () => {
 
-    const cookie = "CF_COOKIES_PREFERENCES_SET=1; CF_AUTH=3odnc5udu0rolkvnbiu2io2vn5; CF_PAGE_TIMEOUT=1716657914568";
+    const cookie = "CF_COOKIES_PREFERENCES_SET=1; CF_AUTH=3odnc5udu0rolkvnbiu2io2vn5; CF_PAGE_TIMEOUT=1716712243246";
 
     const ACCEPTED_ERROR_COUNT = 10
     let errorCount = 0;
@@ -177,7 +178,7 @@ export const getContracts = async () => {
 
                 const awardedValue = getAwardedValue($(div).find(':nth-child(8)').text(), title, publishedDate);
 
-                logger.info(`Get details ${link}`);
+                logger.info(`Get ${publishedDate} ${link}`);
 
                 const details = await fetch(link);
 
@@ -344,12 +345,30 @@ export const createContracts = async () => {
                                 name: row['awardedTo'],
                             }
 
+                            const dynamoDbItem:dynamoItem = {
+                                id: row['id'],
+                                title: row['title'],
+                                supplier: row['supplier'],
+                                description: row['description'].substring(0, 200),
+                                publishedDate: cleanRow["publishedDate"],
+                                awardedDate: cleanRow['awardedDate'],
+                                awardedValue: Number(row['awardedValue']),
+                                issuedByParties: new Set(row['issuedByParties']),
+                                category: row['category'],
+                                industry: row['industry'],
+                                link: row['link'],
+                                location: row['location'],
+                                awardedTo: row['awardedTo'],
+                            }
+
                             console.log(contract);
                             console.log("=================================");                            
                             console.log(contractAwardedTo);
                             
                 
                             // createContract(contractAwardedTo, contract);
+
+                            addDynamoDbRow(dynamoDbItem);
 
                             // console.log(`got row ${JSON.stringify(row)}`);
                         } catch (error) {
