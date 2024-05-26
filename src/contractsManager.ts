@@ -4,6 +4,7 @@ const path = require('path');
 import { getCategory } from "./utils/categoryManager";
 import { parse } from '@fast-csv/parse';
 const fs = require('fs');
+import fsp from 'fs/promises'; // Use fs.promises for async/await
 const { stringify } = require('csv-stringify');
 const { Readable } = require('stream');
 const cheerio = require('cheerio');
@@ -370,6 +371,7 @@ export const createContracts = async () => {
     const files = await fs.promises.readdir(csvDirectoryPath);
     // @ts-ignore
     const csvFiles = files.filter(file => file.endsWith('.csv'));
+    console.log("check ", csvFiles);
 
     for (const file of csvFiles) {
         console.log(`Processing file: ${file}`);
@@ -377,19 +379,27 @@ export const createContracts = async () => {
         const contractsToCreate = []; // Batch the contracts
         const parser = parse({ headers: true, delimiter: ',' });
 
+        // @ts-ignore
+        const dynamoData = [];
+
         fs.createReadStream(`${csvDirectoryPath}/${file}`).pipe(parser);
 
         parser.on('readable', async () => { // Event-driven row processing
-            let record;
-            while ((record = parser.read()) !== null) {                
+            let record, index = 0;
+            while ((record = parser.read()) !== null) {
                 try {
                     const contractData = transformCsvRow(record);
                     contractsToCreate.push(contractData);
 
                     // Create contracts in batches (adjust batch size as needed)
                     if (contractsToCreate.length >= 50) {
+                        index = index + 1;
                         // @ts-ignore
                         await createContractsInNeo4j(contractsToCreate);
+
+                        // @ts-ignore
+                        dynamoData.push(...contractsToCreate);
+
                         contractsToCreate.length = 0;
                     }
                 } catch (error) {
@@ -403,14 +413,75 @@ export const createContracts = async () => {
         if (contractsToCreate.length > 0) {
             // @ts-ignore
             await createContractsInNeo4j(contractsToCreate);
+
         }
+
+        // @ts-ignore
+        await writeDynamoDb(dynamoData, file)
 
     }
 };
 
 // @ts-ignore
-function transformCsvRow(row) {
+const writeDynamoDb = async (dynamoData, file) => {
 
+    const writeStream = fs.createWriteStream(file); 
+
+    try {
+
+        for (const item of dynamoData) {
+            const dynamoDbItem = {
+                Item: { 
+                    id: { S: item.contract.id },
+                    title: { S: item.contract.title },
+                    supplier: { S: item.contract.supplier },
+                    description: { S: item.contract.description },
+                    publishedDate: { S: item.contract.publishedDate },
+                    awardedDate: { S: item.contract.awardedDate },
+                    awardedValue: { N: item.contract.awardedValue.toString() },
+                    issuedByParties: { SS: Array.from(item.contract.issuedByParties) },
+                    category: { S: item.contract.category },
+                    industry: { S: item.contract.industry },
+                    link: { S: item.contract.link },
+                    location: { S: item.contract.location },
+                    awardedTo: { S: item.contractAwardedTo.name }
+                }
+            };
+
+            // Write individual item, followed by a newline
+            writeStream.write(JSON.stringify(dynamoDbItem) + '\n');
+        }
+
+        writeStream.end();
+        dynamoData.length = 0;
+
+        // for (const item of contracts) {                        
+
+        //     const dynamoDbItem:dynamoItem = {
+        //         id: item.contract.id,
+        //         title: item.contract.title,
+        //         supplier: item.contract.supplier,
+        //         description: item.contract.description,
+        //         publishedDate: item.contract.publishedDate,
+        //         awardedDate: item.contract.awardedDate,
+        //         awardedValue: item.contract.awardedValue,
+        //         issuedByParties: new Set(item.contract.issuedByParties.join(",")),
+        //         category: item.contract.category,
+        //         industry: item.contract.industry,
+        //         link: item.contract.link,
+        //         location: item.contract.location,
+        //         awardedTo: item.contractAwardedTo.awardedTo,
+        //     }
+
+        // }        
+    } catch (error) {
+        console.error(error)
+    }
+
+}
+
+// @ts-ignore
+function transformCsvRow(row) {
 
     let lastValidDate = null;
 
@@ -453,14 +524,6 @@ function transformCsvRow(row) {
 
     return { contract, contractAwardedTo }
 
-    // return [
-    //     { name: row['awardedTo'] }, // contractAwardedToNode
-    //     { 
-    //         id: row['id'],
-    //         title: row['title'],
-    //         // ... (rest of the contract properties)
-    //     }, // contractNode
-    // ];
 }
 
 // @ts-ignore
@@ -471,10 +534,10 @@ async function createContractsInNeo4j(contracts) {
     const driver = neo4j.driver(CONNECTION_STRING, neo4j.auth.basic(process.env.NEO4J_USER || '', process.env.NEO4J_PASSWORD || ''));
     const session = driver.session();
     try {
-        for (const item of contracts) {                        
+        for (const item of contracts) {
             await createContract(item.contractAwardedTo, item.contract, session);
         }
-        // 1-second delay after each batch of 50 contracts
+        // TODO 1 second delate here is it necessary?
         await new Promise(resolve => setTimeout(resolve, 1000));
     } finally {
         await session.close();
