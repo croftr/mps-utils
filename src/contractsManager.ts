@@ -381,8 +381,7 @@ export const createContracts = async () => {
 
         parser.on('readable', async () => { // Event-driven row processing
             let record;
-            while ((record = parser.read()) !== null) {
-                console.log('hello');
+            while ((record = parser.read()) !== null) {                
                 try {
                     const contractData = transformCsvRow(record);
                     contractsToCreate.push(contractData);
