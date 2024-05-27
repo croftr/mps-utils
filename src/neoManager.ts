@@ -369,8 +369,8 @@ export const createContract = async (contractAwardedTo: contractAwardedToNode, c
 
     // const session = driver.session();
     try {
-        // await session.run(combinedCypher, parameters);
-        logger.info(`Created contract ${contract.title} ${contract.publishedDate}`)
+        await session.run(combinedCypher, parameters);
+        // logger.info(`Created contract ${contract.title} ${contract.publishedDate}`)
     } catch (error) {
         console.error("oops ", error)
     } finally {

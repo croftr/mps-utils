@@ -366,8 +366,8 @@ export const getContracts = async () => {
 //  }
 
 export const createContracts = async () => {
-    const csvDirectoryPath = './output';
-
+    const csvDirectoryPath = 'D:/contracts';
+    
     const files = await fs.promises.readdir(csvDirectoryPath);
     // @ts-ignore
     const csvFiles = files.filter(file => file.endsWith('.csv'));
@@ -425,7 +425,13 @@ export const createContracts = async () => {
 // @ts-ignore
 const writeDynamoDb = async (dynamoData, file) => {
 
-    const writeStream = fs.createWriteStream(file); 
+    // const writeStream = fs.createWriteStream(`${file.split(".")}.json`); 
+
+
+    const directory = 'dynamo';
+    await fsp.mkdir(directory, { recursive: true }); // Create directory if it doesn't exist
+    const outputFilename = `${directory}/${file.split('.')[0]}.json`; // Add directory and keep .json extension
+    const writeStream = fs.createWriteStream(outputFilename);
 
     try {
 
@@ -454,26 +460,7 @@ const writeDynamoDb = async (dynamoData, file) => {
 
         writeStream.end();
         dynamoData.length = 0;
-
-        // for (const item of contracts) {                        
-
-        //     const dynamoDbItem:dynamoItem = {
-        //         id: item.contract.id,
-        //         title: item.contract.title,
-        //         supplier: item.contract.supplier,
-        //         description: item.contract.description,
-        //         publishedDate: item.contract.publishedDate,
-        //         awardedDate: item.contract.awardedDate,
-        //         awardedValue: item.contract.awardedValue,
-        //         issuedByParties: new Set(item.contract.issuedByParties.join(",")),
-        //         category: item.contract.category,
-        //         industry: item.contract.industry,
-        //         link: item.contract.link,
-        //         location: item.contract.location,
-        //         awardedTo: item.contractAwardedTo.awardedTo,
-        //     }
-
-        // }        
+      
     } catch (error) {
         console.error(error)
     }
@@ -529,17 +516,18 @@ function transformCsvRow(row) {
 // @ts-ignore
 async function createContractsInNeo4j(contracts) {
     let CONNECTION_STRING = `bolt://${process.env.DOCKER_HOST}:7687`;
-    // @ts-ignore
-    // const driver = neo4j.driver(/* ... your driver configuration ... */);
-    const driver = neo4j.driver(CONNECTION_STRING, neo4j.auth.basic(process.env.NEO4J_USER || '', process.env.NEO4J_PASSWORD || ''));
-    const session = driver.session();
+    
+    
+    // const driver = neo4j.driver(CONNECTION_STRING, neo4j.auth.basic(process.env.NEO4J_USER || '', process.env.NEO4J_PASSWORD || ''));
+    // const session = driver.session();
     try {
-        for (const item of contracts) {
-            await createContract(item.contractAwardedTo, item.contract, session);
-        }
+        // for (const item of contracts) {
+        //     await createContract(item.contractAwardedTo, item.contract, session);
+        // }
+        logger.info(`Created ${contracts.length} contracts in neo`)
         // TODO 1 second delate here is it necessary?
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // await new Promise(resolve => setTimeout(resolve, 1000));
     } finally {
-        await session.close();
+        // await session.close();
     }
 }
