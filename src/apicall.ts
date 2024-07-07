@@ -17,7 +17,7 @@ export const getMps = async (skip: number, take: number): Promise<Array<Mp>> => 
 
     const url: string = `https://members-api.parliament.uk/api/Members/Search?skip=${skip}&take=${take}&IsEligible=${true}&IsCurrentMember=${true}&House=${HOUSE_OF_COMMONS}`;
 
-    logger.trace(url);
+    logger.info(url);
 
     const res = await fetch(url);
     
