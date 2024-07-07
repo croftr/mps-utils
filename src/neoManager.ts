@@ -3,7 +3,6 @@ import { Mp } from './models/mps';
 import { VotedFor } from './models/relationships';
 import neo4j from "neo4j-driver";
 import { contractAwardedToNode, contractNode, issuedContractRelationship, recievedContractRelationship } from "./models/contracts";
-import { log } from 'console';
 
 const logger = require('./logger');
 
@@ -261,24 +260,24 @@ export const setupNeo = async () => {
         let result;
 
         // Range Indexes
-        result = await runCypher(`CREATE RANGE INDEX IF NOT EXISTS FOR (e:Mp) ON (e.id)`, session);
-        result = await runCypher(`CREATE RANGE INDEX IF NOT EXISTS FOR (e:Party) ON (e.partyName)`, session);
-        result = await runCypher(`CREATE RANGE INDEX IF NOT EXISTS FOR (e:Organisation) ON (e.donar)`, session);
-        result = await runCypher(`CREATE RANGE INDEX IF NOT EXISTS FOR (e:Organisation) ON (e.DonorName)`, session);
-        result = await runCypher(`CREATE RANGE INDEX IF NOT EXISTS FOR (e:Individual) ON (e.donar)`, session);
-        result = await runCypher(`CREATE RANGE INDEX IF NOT EXISTS FOR (e:Individual) ON (e.DonorName)`, session);
-        result = await runCypher(`CREATE RANGE INDEX IF NOT EXISTS FOR (e:Contract) ON (e.contractId)`, session);
+        // result = await runCypher(`CREATE RANGE INDEX IF NOT EXISTS FOR (e:Mp) ON (e.id)`, session);
+        // result = await runCypher(`CREATE RANGE INDEX IF NOT EXISTS FOR (e:Party) ON (e.partyName)`, session);
+        // result = await runCypher(`CREATE RANGE INDEX IF NOT EXISTS FOR (e:Organisation) ON (e.donar)`, session);
+        // result = await runCypher(`CREATE RANGE INDEX IF NOT EXISTS FOR (e:Organisation) ON (e.DonorName)`, session);
+        // result = await runCypher(`CREATE RANGE INDEX IF NOT EXISTS FOR (e:Individual) ON (e.donar)`, session);
+        // result = await runCypher(`CREATE RANGE INDEX IF NOT EXISTS FOR (e:Individual) ON (e.DonorName)`, session);
+        // result = await runCypher(`CREATE RANGE INDEX IF NOT EXISTS FOR (e:Contract) ON (e.contractId)`, session);
 
-        // Uniqueness Constraints (These will automatically create range indexes
-        result = await runCypher(`CREATE CONSTRAINT IF NOT EXISTS ON (e:Mp) ASSERT (e.id) IS UNIQUE`, session);
-        result = await runCypher(`CREATE CONSTRAINT IF NOT EXISTS ON (e:Party) ASSERT (e.partyName) IS UNIQUE`, session);
-        result = await runCypher(`CREATE CONSTRAINT IF NOT EXISTS ON (e:Organisation) ASSERT (e.donar) IS UNIQUE`, session);
-        result = await runCypher(`CREATE CONSTRAINT IF NOT EXISTS ON (e:Organisation) ASSERT (e.DonorName) IS UNIQUE`, session);
-        result = await runCypher(`CREATE CONSTRAINT IF NOT EXISTS ON (e:Organisation) ASSERT (e.Name) IS UNIQUE`, session);
-        result = await runCypher(`CREATE CONSTRAINT IF NOT EXISTS ON (e:Individual) ASSERT (e.donar) IS UNIQUE`, session);
-        result = await runCypher(`CREATE CONSTRAINT IF NOT EXISTS ON (e:Individual) ASSERT (e.DonorName) IS UNIQUE`, session);
-        result = await runCypher(`CREATE CONSTRAINT IF NOT EXISTS ON (e:Individual) ASSERT (e.Name) IS UNIQUE`, session);
-        result = await runCypher(`CREATE CONSTRAINT IF NOT EXISTS ON (e:Contract) ASSERT (e.contractId) IS UNIQUE`, session);
+        // // Uniqueness Constraints (These will automatically create range indexes
+        // result = await runCypher(`CREATE CONSTRAINT IF NOT EXISTS ON (e:Mp) ASSERT (e.id) IS UNIQUE`, session);
+        // result = await runCypher(`CREATE CONSTRAINT IF NOT EXISTS ON (e:Party) ASSERT (e.partyName) IS UNIQUE`, session);
+        // result = await runCypher(`CREATE CONSTRAINT IF NOT EXISTS ON (e:Organisation) ASSERT (e.donar) IS UNIQUE`, session);
+        // result = await runCypher(`CREATE CONSTRAINT IF NOT EXISTS ON (e:Organisation) ASSERT (e.DonorName) IS UNIQUE`, session);
+        // result = await runCypher(`CREATE CONSTRAINT IF NOT EXISTS ON (e:Organisation) ASSERT (e.Name) IS UNIQUE`, session);
+        // result = await runCypher(`CREATE CONSTRAINT IF NOT EXISTS ON (e:Individual) ASSERT (e.donar) IS UNIQUE`, session);
+        // result = await runCypher(`CREATE CONSTRAINT IF NOT EXISTS ON (e:Individual) ASSERT (e.DonorName) IS UNIQUE`, session);
+        // result = await runCypher(`CREATE CONSTRAINT IF NOT EXISTS ON (e:Individual) ASSERT (e.Name) IS UNIQUE`, session);
+        // result = await runCypher(`CREATE CONSTRAINT IF NOT EXISTS ON (e:Contract) ASSERT (e.contractId) IS UNIQUE`, session);
 
 
     } catch (error) {
@@ -378,74 +377,6 @@ export const createContract = async (contractAwardedTo: contractAwardedToNode, c
     }
 };
 
-// export const createContract = async (contractAwardedTo: contractAwardedToNode, contract: contractNode) => {
-
-//     CONNECTION_STRING = `bolt://${process.env.DOCKER_HOST}:7687`;
-
-//     driver = neo4j.driver(CONNECTION_STRING, neo4j.auth.basic(process.env.NEO4J_USER || '', process.env.NEO4J_PASSWORD || ''));
-//     const session = driver.session();
-
-//     //ogganisation could already exist as a donar for example     
-//     const contractAwardedToCypher = `
-//     MERGE (n:Organisation { Name: $organisationName })
-//     SET n.hasHadContract = $hasHadContract 
-//     `;
-
-//     const parameters1 = {
-//         organisationName: contractAwardedTo.name,
-//         hasHadContract: true
-//     };
-
-
-//     await session.run(contractAwardedToCypher, parameters1);
-
-//     const contractCypher = `
-//     MERGE (n:Contract { ContractId: $contractId })
-//     SET n.AwardedValue = $awardedValue,
-//         n.Title = $title,
-//         n.Category = $category,
-//         n.Description = $description,        
-//         n.PublishedDate = date($publishedDate),        
-//         n.AwardedDate = date($awardedDate),
-//         n.Supplier = $supplier,
-//         n.Industry = $industry,
-//         n.Link = $link,
-//         n.Location = $location        
-//     `;
-
-//     const parameters2 = {
-//         contractId: contract.id,
-//         title: contract.title,
-//         awardedValue: contract.awardedValue,
-//         category: contract.category,
-//         description: contract.description,
-//         publishedDate: contract.publishedDate,
-//         awardedDate: contract.awardedDate,
-//         issuedByParties: contract.issuedByParties,
-//         supplier: contract.supplier,
-//         industry: contract.industry,
-//         link: contract.link,
-//         location: contract.location
-//     };
-
-
-//     await session.run(contractCypher, parameters2);
-
-//     const recievedContractRelCypher = `MATCH (org:Organisation { Name: "${contractAwardedTo.name}"}) MATCH (con:Contract {ContractId: "${contract.id}"}) CREATE (con)-[:AWARDED { AwardedDate: date("${contract.awardedDate}") }]->(org)`;
-//     await runCypher(recievedContractRelCypher, session);
-
-//     // if more than 1 party was in power at the time create relationship for each party 
-//     for (let partyName of contract.issuedByParties) {
-//         const issuedContractRelCypher = `MATCH (party:Party { partyName: "${partyName}"}) MATCH (con:Contract { ContractId: "${contract.id}"}) CREATE (party)-[:TENDERED { PublishedDate: date("${contract.publishedDate}") }]->(con)`;
-//         await runCypher(issuedContractRelCypher, session);
-//     }
-
-//     // logger.info(`Created neo data for contract ${contract.title}`)
-
-//     session.close();  // Close the session when done
-
-// }
-
 export const setupDataScience = async () => {
 
     logger.info("Creating data scuence node similarity")
@@ -505,33 +436,74 @@ export const createPartyNode = async (party: any) => {
 
 }
 
+/**
+ * 
+ * every mp that we have not just created is assumed to therefor be inactive 
+ * @param ids of all the active mps
+ * 
+ */
+export const updateMpStatus = async (ids:Array<number>) => {
+    logger.info(`updaating  mps status for ${ids}`)
+
+    const cypher: string = `
+    MATCH (mp:Mp)
+    WHERE NOT mp.id IN [${ids}]
+    SET mp.isActive = false
+    `
+
+    const session = await driver.session();
+    await runCypher(cypher, session);
+}
+
+
 export const createMpNode = async (mp: Mp) => {
 
     const partyName = mp.latestParty.name.includes("abour") ? "Labour" : mp.latestParty.name;
 
-    const cypher: string =
-        `CREATE (mp:Mp {
-        id: ${mp.id},
-        nameListAs: "${mp.nameListAs}",
-        nameDisplayAs: "${mp.nameDisplayAs}",
-        nameFullTitle: "${mp.nameFullTitle}",                
-        partyId: "${mp.latestParty.id}",
-        partyName: "${partyName}",
-        gender: "${mp.gender}",        
-        partyBackgroundColour: "${mp.latestParty.backgroundColour}",
-        partyForegroundColour: "${mp.latestParty.foregroundColour}",
-        partyIsLordsMainParty: "W${mp.latestParty.isLordsMainParty}",
-        partyIsLordsSpiritualParty: "${mp.latestParty.isLordsSpiritualParty}",        
-        partyIsIndependentParty: "${mp.latestParty.isIndependentParty}",
-        house: ${mp.latestHouseMembership.house},
-        membershipFrom: "${mp.latestHouseMembership.membershipFrom}",
-        membershipStartDate: datetime("${mp.latestHouseMembership.membershipStartDate}")
-      });`
+    const cypher: string = `
+    MERGE (mp:Mp {id: ${mp.id}})
+    ON CREATE SET
+      mp.nameListAs = "${mp.nameListAs}",
+      mp.nameDisplayAs = "${mp.nameDisplayAs}",
+      mp.nameFullTitle = "${mp.nameFullTitle}",
+      mp.partyId = "${mp.latestParty.id}",
+      mp.partyName = "${partyName}",
+      mp.gender = "${mp.gender}",
+      mp.partyBackgroundColour = "${mp.latestParty.backgroundColour}",
+      mp.partyForegroundColour = "${mp.latestParty.foregroundColour}",
+      mp.partyIsLordsMainParty = "${mp.latestParty.isLordsMainParty}",
+      mp.partyIsLordsSpiritualParty = "${mp.latestParty.isLordsSpiritualParty}",
+      mp.partyIsIndependentParty = "${mp.latestParty.isIndependentParty}",
+      mp.house = ${mp.latestHouseMembership.house},
+      mp.membershipFrom = "${mp.latestHouseMembership.membershipFrom}",
+      mp.isActive = "${mp.latestHouseMembership.membershipStatus.statusIsActive}",
+      mp.membershipEndDate = ${mp.latestHouseMembership.membershipEndDate ? `datetime("${mp.latestHouseMembership.membershipEndDate}")` : 'null'},
+      mp.membershipStartDate = ${mp.latestHouseMembership.membershipStartDate ? `datetime("${mp.latestHouseMembership.membershipStartDate}")` : 'null'}
+    ON MATCH SET
+      mp.nameListAs = "${mp.nameListAs}",
+      mp.nameDisplayAs = "${mp.nameDisplayAs}",
+      mp.nameFullTitle = "${mp.nameFullTitle}",
+      mp.partyId = "${mp.latestParty.id}",
+      mp.partyName = "${partyName}",
+      mp.gender = "${mp.gender}",
+      mp.partyBackgroundColour = "${mp.latestParty.backgroundColour}",
+      mp.partyForegroundColour = "${mp.latestParty.foregroundColour}",
+      mp.partyIsLordsMainParty = "${mp.latestParty.isLordsMainParty}",
+      mp.partyIsLordsSpiritualParty = "${mp.latestParty.isLordsSpiritualParty}",
+      mp.partyIsIndependentParty = "${mp.latestParty.isIndependentParty}",
+      mp.house = ${mp.latestHouseMembership.house},
+      mp.membershipFrom = "${mp.latestHouseMembership.membershipFrom}",
+      mp.isActive = true,
+      mp.membershipEndDate = ${mp.latestHouseMembership.membershipEndDate ? `datetime("${mp.latestHouseMembership.membershipEndDate}")` : 'null'},
+      mp.membershipStartDate = ${mp.latestHouseMembership.membershipStartDate ? `datetime("${mp.latestHouseMembership.membershipStartDate}")` : 'null'}
+  `;
+  
 
     try {
-        const session = driver.session();
+        const session = await driver.session();
         const result = await session.run(cypher);
-        // logger.debug('created ', result);
+        // logger.debug(result);
+        // logger.debug(cypher);
 
     } catch (error: any) {
         if (error.code !== "Neo.ClientError.Schema.ConstraintValidationFailed") {

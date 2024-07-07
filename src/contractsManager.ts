@@ -58,7 +58,7 @@ const getAwardedValue = (awardedValueText: string, title: string, publishedDate:
 
 const writeCsv = async (data: Array<any>, pageNumber: number) => {
 
-    const pagePickup = 1000;
+    const pagePickup = 0;
 
     pageNumber = pageNumber + pagePickup;
 
@@ -104,11 +104,6 @@ const getPartyFromIssueDate = (issuedDate: string): string => {
 
     return "";
 
-}
-
-const formatDate = (dateStr: string) => {
-    const [day, month, year] = dateStr.split("/");
-    return `${year}-${month}-${day}`;
 }
 
 const extractContractId = (linkId: string) => {
@@ -261,120 +256,19 @@ export const getContracts = async () => {
     logger.info("The end")
 }
 
-// export const createContracts = async () => {
+export const createContracts = async (isCreatingDynamo: boolean, isCreatingNeo: boolean) => {
 
-//     const csvDirectoryPath = './output';
+    // const csvDirectoryPath = 'D:/contracts';
+    // const csvDirectoryPath = 'D:/rerun';
+    const csvDirectoryPath = './output';
 
-//     // @ts-ignore
-//     fs.readdir(csvDirectoryPath, (err, files) => {
-
-//         if (err) throw err;
-
-//         files
-//             // @ts-ignore
-//             .filter(file => file.endsWith('.csv'))
-//             // @ts-ignore
-//             .forEach(file => {
-//                 const cleanedFile:Array<any> = [];
-//                 console.log(`got file ${file}`);
-//                 let lastValidDate:string;
-//                 const parser = parse({ headers: true }); // Parse into objects
-//                 fs.createReadStream(`${csvDirectoryPath}/${file}`)
-//                     .pipe(parser)
-//                     // @ts-ignore
-//                     .on('data', async (row) => {
-//                         try {
-//                             const cleanRow = { ...row }; // Copy the row
-
-//                             for (const key of Object.keys(row)) {
-//                                 if (key.toLowerCase().includes('date')) {
-
-//                                     const dateToFormat = row[key].split(",")[0].trim();                                                                                                                                                                                    
-//                                     const date = DateTime.fromFormat(dateToFormat, 'd MMMM yyyy');
-
-//                                     if (date.isValid) {
-//                                         cleanRow[key] = date.toISODate();
-//                                         lastValidDate = date.toISODate();                                                                                
-//                                     } else {
-//                                         //if the date is too messed up set it to the last date we used as they are in date order so should be same of very close
-//                                         console.warn(`Invalid date format in column ${key}:`, row[key]);
-//                                         cleanRow[key] = lastValidDate;
-//                                     }
-//                                 } 
-
-//                             }
-//                             // @ts-ignore
-//                             cleanedFile.push(cleanRow);
-
-//                             const contract: contractNode = {
-//                                 id: row['id'],
-//                                 title: row['title'],
-//                                 supplier: row['supplier'],
-//                                 description: row['description'].substring(0, 200),
-//                                 publishedDate: cleanRow["publishedDate"],
-//                                 awardedDate: cleanRow['awardedDate'],
-//                                 awardedValue: Number(row['awardedValue']),
-//                                 issuedByParties: row['issuedByParties'].split(','),
-//                                 category: row['category'],
-//                                 industry: row['industry'],
-//                                 link: row['link'],
-//                                 location: row['location'],
-//                             }
-
-//                             const contractAwardedTo: contractAwardedToNode = {
-//                                 name: row['awardedTo'],
-//                             }
-
-//                             const dynamoDbItem:dynamoItem = {
-//                                 id: row['id'],
-//                                 title: row['title'],
-//                                 supplier: row['supplier'],
-//                                 description: row['description'].substring(0, 200),
-//                                 publishedDate: cleanRow["publishedDate"],
-//                                 awardedDate: cleanRow['awardedDate'],
-//                                 awardedValue: Number(row['awardedValue']),
-//                                 issuedByParties: new Set(row['issuedByParties']),
-//                                 category: row['category'],
-//                                 industry: row['industry'],
-//                                 link: row['link'],
-//                                 location: row['location'],
-//                                 awardedTo: row['awardedTo'],
-//                             }
-
-//                             console.log("call 1--------------------------------------------", contractAwardedTo);                                                                    
-//                             await createContract(contractAwardedTo, contract);
-//                             // await new Promise(resolve => setTimeout(resolve, 1000)); 
-//                             console.log("end--------------------------------------------", contractAwardedTo);                                                                    
-
-//                             // addDynamoDbRow(dynamoDbItem);
-
-//                             // console.log(`got row ${JSON.stringify(row)}`);
-//                         } catch (error) {
-//                             console.error(`Error adding item from ${file}:`, error);
-//                         }                        
-//                     })                    
-//                     .on('end', () => {
-//                         console.log(`Finished processing ${file}`);
-//                         // cleanedFile.forEach(row => console.log(row));        
-//                         // console.log(cleanedFile[0]);
-//                         cleanedFile.length = 0;
-//                     });
-
-//             });
-
-//     });
-//  }
-
-export const createContracts = async () => {
-    const csvDirectoryPath = 'D:/contracts';
-    
     const files = await fs.promises.readdir(csvDirectoryPath);
     // @ts-ignore
     const csvFiles = files.filter(file => file.endsWith('.csv'));
-    console.log("check ", csvFiles);
+    console.log("converting ", csvFiles);
 
     for (const file of csvFiles) {
-        console.log(`Processing file: ${file}`);
+        logger.info(`Processing file: ${file}`);
         // @ts-ignore
         const contractsToCreate = []; // Batch the contracts
         const parser = parse({ headers: true, delimiter: ',' });
@@ -384,23 +278,32 @@ export const createContracts = async () => {
 
         fs.createReadStream(`${csvDirectoryPath}/${file}`).pipe(parser);
 
+        let index = 0;
         parser.on('readable', async () => { // Event-driven row processing
-            let record, index = 0;
+            let record 
             while ((record = parser.read()) !== null) {
+                
                 try {
                     const contractData = transformCsvRow(record);
                     contractsToCreate.push(contractData);
 
                     // Create contracts in batches (adjust batch size as needed)
-                    if (contractsToCreate.length >= 50) {
+                    if (contractsToCreate.length >= 50 || record === null) {
                         index = index + 1;
-                        // @ts-ignore
-                        await createContractsInNeo4j(contractsToCreate);
 
-                        // @ts-ignore
-                        dynamoData.push(...contractsToCreate);
+                        if (isCreatingDynamo) {
+                            // @ts-ignore
+                            dynamoData.push(...contractsToCreate);
+                        }
+
+                        if (isCreatingNeo) {
+                            // @ts-ignore
+                            await createContractsInNeo4j(contractsToCreate);
+                        }
 
                         contractsToCreate.length = 0;
+
+
                     }
                 } catch (error) {
                     console.error(`Error processing row in ${file}:`, error);
@@ -408,16 +311,38 @@ export const createContracts = async () => {
             }
         });
 
+        // After the 'end' event is emitted, process any remaining contracts
+        parser.on('end', async () => {
+            if (contractsToCreate.length > 0) {
+                index = index + 1;
+
+                if (isCreatingDynamo) {
+                    // @ts-ignore
+                    dynamoData.push(...contractsToCreate);
+                }
+
+                if (isCreatingNeo) {
+                    // @ts-ignore
+                    await createContractsInNeo4j(contractsToCreate);
+                    contractsToCreate.length = 0;
+                }
+            }
+        });
+
         await new Promise(resolve => parser.on('end', resolve)); // Wait for parsing to finish
         // Process any remaining contracts
         if (contractsToCreate.length > 0) {
-            // @ts-ignore
-            await createContractsInNeo4j(contractsToCreate);
+            if (isCreatingNeo) {
+                // @ts-ignore
+                await createContractsInNeo4j(contractsToCreate);
+            }
 
         }
 
-        // @ts-ignore
-        await writeDynamoDb(dynamoData, file)
+        if (isCreatingDynamo) {
+            // @ts-ignore
+            await writeDynamoDb(dynamoData, file)
+        }
 
     }
 };
@@ -425,19 +350,16 @@ export const createContracts = async () => {
 // @ts-ignore
 const writeDynamoDb = async (dynamoData, file) => {
 
-    // const writeStream = fs.createWriteStream(`${file.split(".")}.json`); 
-
-
     const directory = 'dynamo';
     await fsp.mkdir(directory, { recursive: true }); // Create directory if it doesn't exist
-    const outputFilename = `${directory}/${file.split('.')[0]}.json`; // Add directory and keep .json extension
+    const outputFilename = `${directory}/${file.split('.')[0]}.json`;
     const writeStream = fs.createWriteStream(outputFilename);
 
     try {
 
         for (const item of dynamoData) {
             const dynamoDbItem = {
-                Item: { 
+                Item: {
                     id: { S: item.contract.id },
                     title: { S: item.contract.title },
                     supplier: { S: item.contract.supplier },
@@ -460,7 +382,7 @@ const writeDynamoDb = async (dynamoData, file) => {
 
         writeStream.end();
         dynamoData.length = 0;
-      
+
     } catch (error) {
         console.error(error)
     }
@@ -483,12 +405,19 @@ function transformCsvRow(row) {
             } else if (lastValidDate) { // Use the last valid date if available
                 row[key] = lastValidDate;
             } else {
-                console.warn(`Invalid date format in column ${key}:`, row[key]);
+                logger.error(`Invalid date format in column ${key}:`, row[key]);
                 // Handle the case where the first date is invalid (e.g., skip the row)
             }
         }
     }
 
+    let awardedValue=0
+    try {        
+        awardedValue = Number(row['awardedValue']);    
+    } catch (error) {
+        logger.error(`Invalid number of ${row['awardedValue']} in column awardedValue`);
+        awardedValue = -1;
+    }
 
     const contract: contractNode = {
         id: row['id'],
@@ -497,14 +426,14 @@ function transformCsvRow(row) {
         description: row['description'].substring(0, 200),
         publishedDate: row["publishedDate"],
         awardedDate: row['awardedDate'],
-        awardedValue: Number(row['awardedValue']),
+        awardedValue,
         issuedByParties: row['issuedByParties'].split(','),
         category: row['category'],
         industry: row['industry'],
         link: row['link'],
         location: row['location'],
     }
-
+    
     const contractAwardedTo: contractAwardedToNode = {
         name: row['awardedTo'],
     }
@@ -516,18 +445,17 @@ function transformCsvRow(row) {
 // @ts-ignore
 async function createContractsInNeo4j(contracts) {
     let CONNECTION_STRING = `bolt://${process.env.DOCKER_HOST}:7687`;
-    
-    
-    // const driver = neo4j.driver(CONNECTION_STRING, neo4j.auth.basic(process.env.NEO4J_USER || '', process.env.NEO4J_PASSWORD || ''));
-    // const session = driver.session();
+
+    const driver = neo4j.driver(CONNECTION_STRING, neo4j.auth.basic(process.env.NEO4J_USER || '', process.env.NEO4J_PASSWORD || ''));
+    const session = driver.session();
     try {
-        // for (const item of contracts) {
-        //     await createContract(item.contractAwardedTo, item.contract, session);
-        // }
+        for (const item of contracts) {
+            await createContract(item.contractAwardedTo, item.contract, session);
+        }
         logger.info(`Created ${contracts.length} contracts in neo`)
         // TODO 1 second delate here is it necessary?
         // await new Promise(resolve => setTimeout(resolve, 1000));
     } finally {
-        // await session.close();
+        await session.close();
     }
 }

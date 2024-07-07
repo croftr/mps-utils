@@ -1,8 +1,10 @@
-import { setupDataScience, setupNeo, batchDelete } from "./src/neoManager";
+import { setupDataScience, setupNeo, batchDelete, createMpNode, updateMpStatus } from "./src/neoManager";
 import { Mp } from "./src/models/mps";
 import { createParties } from "./src/nodeManager";
 import { createDonations } from "./src/donationsManager";
 import { createContracts, getContracts } from "./src/contractsManager";
+import { getMps } from "./src/apicall";
+import { log } from "console";
 
 const logger = require('./src/logger');
 
@@ -11,6 +13,7 @@ const CREATE_DONATIONS = process.env.CREATE_DONATIONS === "true" ? true : false;
 const RUN_DATA_SCIENCE = process.env.RUN_DATA_SCIENCE === "true" ? true : false;
 const CREATE_CONTRACTS = process.env.CREATE_CONTRACTS === "true" ? true : false;
 const DELETE_DONARS = process.env.DELETE_DONARS === "true" ? true : false;
+const CREATE_MPS = process.env.CREATE_MPS === "true" ? true : false;
 
 const endAndPrintTiming = (timingStart: number, timingName: string) => {
   // END timing
@@ -36,11 +39,44 @@ const sortMps = (a: Mp, b: Mp) => {
 
 const go = async () => {
 
-  // await setupNeo();
-
-  // Start timing
+  await setupNeo();
   const totalTimeStart = performance.now();
   let timingStart = performance.now();
+  const allMps: Array<Mp> = [];
+
+  if (CREATE_MPS) {
+
+  
+    let neoCreateCount = 0;
+    let skip = 0;
+
+    for (let i = 0; ; i++) {
+
+      const mps: Array<Mp> = await getMps(skip, Number(process.env.MP_TAKE_PER_LOOP));
+
+      skip += 25;
+      allMps.push(...mps);
+
+      if (mps.length < 20) {
+        break;
+      }
+    }
+    allMps.sort(sortMps);
+    logger.debug(`Created ${allMps.length} MPs in memory`);
+
+
+    for (let i of allMps) {            
+      await createMpNode(i);
+      neoCreateCount = neoCreateCount + 1;
+    }
+
+    await updateMpStatus(allMps.map(i => i.id));
+
+    logger.debug(`Created ${neoCreateCount} MPs in Neo4j`);
+
+    // END timing
+    endAndPrintTiming(timingStart, 'create mps');
+  }
 
   if (DELETE_DONARS) {
     await batchDelete();
@@ -68,11 +104,11 @@ const go = async () => {
 
   if (CREATE_CONTRACTS) {
     logger.info("CREATING CONTRACTS")
-    await createContracts();
-    // await getContracts()    
+    await createContracts(false, true); //add contracts to databases
+    // await getContracts()   //get contracts from website
     endAndPrintTiming(timingStart, 'create contracts');
   }
-  
+
   endAndPrintTiming(totalTimeStart, 'Everything complete');
   logger.info('THE END');
 }

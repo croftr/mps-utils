@@ -1,8 +1,15 @@
+export type MembershipStatus = {
+  statusIsActive: string;
+}
+
 export type LatestHouseMembership = {
   membershipFrom: string;
   membershipFromId: number;
   house: number;
   membershipStartDate: string;
+  membershipEndDate: string;
+  status: string;
+  membershipStatus: MembershipStatus;  
 }
 
 export type Mp = {
