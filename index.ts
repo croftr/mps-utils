@@ -15,6 +15,8 @@ const CREATE_CONTRACTS = process.env.CREATE_CONTRACTS === "true" ? true : false;
 const DELETE_DONARS = process.env.DELETE_DONARS === "true" ? true : false;
 const CREATE_MPS = process.env.CREATE_MPS === "true" ? true : false;
 
+const MP_TAKE_PER_LOOP = 25;
+
 const endAndPrintTiming = (timingStart: number, timingName: string) => {
   // END timing
   let timingEnd = performance.now();
@@ -52,7 +54,7 @@ const go = async () => {
 
     for (let i = 0; ; i++) {
 
-      const mps: Array<Mp> = await getMps(skip, Number(process.env.MP_TAKE_PER_LOOP));
+      const mps: Array<Mp> = await getMps(skip, Number(MP_TAKE_PER_LOOP));
 
       skip += 25;
       allMps.push(...mps);
