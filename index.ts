@@ -4,7 +4,6 @@ import { createParties } from "./src/nodeManager";
 import { createDonations } from "./src/donationsManager";
 import { createContracts, getContracts } from "./src/contractsManager";
 import { getMps } from "./src/apicall";
-import { log } from "console";
 
 const logger = require('./src/logger');
 
