@@ -280,6 +280,13 @@ export const setupNeo = async () => {
         // result = await runCypher(`CREATE CONSTRAINT IF NOT EXISTS ON (e:Individual) ASSERT (e.Name) IS UNIQUE`, session);
         // result = await runCypher(`CREATE CONSTRAINT IF NOT EXISTS ON (e:Contract) ASSERT (e.contractId) IS UNIQUE`, session);
 
+        // Contract relationship constraints
+        // CREATE CONSTRAINT IF NOT EXISTS FOR() - [r: AWARDED] - ()
+        // REQUIRE(r.AwardedDate, r.relId) IS UNIQUE;
+
+        // CREATE CONSTRAINT IF NOT EXISTS FOR() - [r: TENDERED] - ()
+        // REQUIRE(r.PublishedDate, r.relId) IS UNIQUE;
+
 
     } catch (error) {
         //contraint already exists so proceed
@@ -372,13 +379,13 @@ export const createContract = async (contractAwardedTo: contractAwardedToNode, c
         await session.run(combinedCypher, parameters);
         // logger.info(`Created contract ${contract.title} ${contract.publishedDate}`)
     } catch (error) {
-        
+
         //@ts-ignore
         if (error.message.startsWith("Relationship")) {
             //constraint violation
             //@ts-ignore
-            logger.trace(error.message);            
-        } else { 
+            logger.trace(error.message);
+        } else {
             //@ts-ignore
             logger.error(error.message)
         }
