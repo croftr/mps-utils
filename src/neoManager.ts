@@ -3,6 +3,7 @@ import { Mp } from './models/mps';
 import { VotedFor } from './models/relationships';
 import neo4j from "neo4j-driver";
 import { contractAwardedToNode, contractNode, issuedContractRelationship, recievedContractRelationship } from "./models/contracts";
+import { log } from 'console';
 
 const logger = require('./logger');
 
@@ -329,25 +330,25 @@ export const createContract = async (contractAwardedTo: contractAwardedToNode, c
 
     // Combine queries for better performance
     const combinedCypher = `
-        MERGE (org:Organisation { Name: $organisationName })
-        SET org.hasHadContract = $hasHadContract 
-        MERGE (con:Contract { ContractId: $contractId })
-        SET con.AwardedValue = $awardedValue,
-            con.Title = $title,
-            con.Category = $category,
-            con.Description = $description,
-            con.PublishedDate = date($publishedDate),
-            con.AwardedDate = date($awardedDate),
-            con.Supplier = $supplier,
-            con.Industry = $industry,
-            con.Link = $link,
-            con.Location = $location
-        CREATE (con)-[:AWARDED { AwardedDate: date($awardedDate) }]->(org)
-        WITH con
-        UNWIND $issuedByParties AS partyName
-        MATCH (party:Party { partyName: partyName })
-        CREATE (party)-[:TENDERED { PublishedDate: date($publishedDate) }]->(con)
-    `;
+    MERGE (org:Organisation { Name: $organisationName })
+    SET org.hasHadContract = $hasHadContract 
+    MERGE (con:Contract { ContractId: $contractId })
+    SET con.AwardedValue = $awardedValue,
+        con.Title = $title,
+        con.Category = $category,
+        con.Description = $description,
+        con.PublishedDate = date($publishedDate),
+        con.AwardedDate = date($awardedDate),
+        con.Supplier = $supplier,
+        con.Industry = $industry,
+        con.Link = $link,
+        con.Location = $location
+    CREATE (con)-[:AWARDED { AwardedDate: date($awardedDate), relId: toString(con.Title) + "_" + toString(org.Name) }]->(org)  // Explicit conversion to string
+    WITH con
+    UNWIND $issuedByParties AS partyName
+    MATCH (party:Party { partyName: partyName })
+    CREATE (party)-[:TENDERED { PublishedDate: date($publishedDate), relId: toString(con.Title) + "_" + toString(party.partyName) }]->(con)  // Explicit conversion to string
+`;
 
     const parameters = {
         organisationName: contractAwardedTo.name,
@@ -371,7 +372,17 @@ export const createContract = async (contractAwardedTo: contractAwardedToNode, c
         await session.run(combinedCypher, parameters);
         // logger.info(`Created contract ${contract.title} ${contract.publishedDate}`)
     } catch (error) {
-        console.error("oops ", error)
+        
+        //@ts-ignore
+        if (error.message.startsWith("Relationship")) {
+            //constraint violation
+            //@ts-ignore
+            logger.trace(error.message);            
+        } else { 
+            //@ts-ignore
+            logger.error(error.message)
+        }
+        //lots of constraint violations
     } finally {
         // await session.close();
     }
@@ -442,7 +453,7 @@ export const createPartyNode = async (party: any) => {
  * @param ids of all the active mps
  * 
  */
-export const updateMpStatus = async (ids:Array<number>) => {
+export const updateMpStatus = async (ids: Array<number>) => {
     logger.info(`updaating  mps status for ${ids}`)
 
     const cypher: string = `
@@ -497,7 +508,7 @@ export const createMpNode = async (mp: Mp) => {
       mp.membershipEndDate = ${mp.latestHouseMembership.membershipEndDate ? `datetime("${mp.latestHouseMembership.membershipEndDate}")` : 'null'},
       mp.membershipStartDate = ${mp.latestHouseMembership.membershipStartDate ? `datetime("${mp.latestHouseMembership.membershipStartDate}")` : 'null'}
   `;
-  
+
 
     try {
         const session = await driver.session();

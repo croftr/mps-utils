@@ -4,7 +4,6 @@ const path = require('path');
 import { getCategory } from "./utils/categoryManager";
 import { parse } from '@fast-csv/parse';
 const fs = require('fs');
-import fsp from 'fs/promises'; // Use fs.promises for async/await
 const { stringify } = require('csv-stringify');
 const { Readable } = require('stream');
 const cheerio = require('cheerio');
@@ -12,9 +11,8 @@ const { DateTime } = require("luxon");
 
 import neo4j from "neo4j-driver";
 
-import { contractNode, contractAwardedToNode, dynamoItem } from "././models/contracts";
+import { contractNode, contractAwardedToNode } from "././models/contracts";
 import { createContract } from "./neoManager";
-import { addDynamoDbRow } from "./dynamoDBManager";
 
 const CSV_SIZE = 50;
 
@@ -52,9 +50,7 @@ const getAwardedValue = (awardedValueText: string, title: string, publishedDate:
         console.error(error);
         return 0;
     }
-
 }
-
 
 const writeCsv = async (data: Array<any>, pageNumber: number) => {
 
@@ -256,11 +252,11 @@ export const getContracts = async () => {
     logger.info("The end")
 }
 
-export const createContracts = async (isCreatingDynamo: boolean, isCreatingNeo: boolean) => {
+export const createContracts = async () => {
 
-    // const csvDirectoryPath = 'D:/contracts';
+    const csvDirectoryPath = 'D:/contracts';
     // const csvDirectoryPath = 'D:/rerun';
-    const csvDirectoryPath = './output';
+    // const csvDirectoryPath = './output';
 
     const files = await fs.promises.readdir(csvDirectoryPath);
     // @ts-ignore
@@ -273,16 +269,13 @@ export const createContracts = async (isCreatingDynamo: boolean, isCreatingNeo: 
         const contractsToCreate = []; // Batch the contracts
         const parser = parse({ headers: true, delimiter: ',' });
 
-        // @ts-ignore
-        const dynamoData = [];
-
         fs.createReadStream(`${csvDirectoryPath}/${file}`).pipe(parser);
 
         let index = 0;
         parser.on('readable', async () => { // Event-driven row processing
-            let record 
+            let record
             while ((record = parser.read()) !== null) {
-                
+
                 try {
                     const contractData = transformCsvRow(record);
                     contractsToCreate.push(contractData);
@@ -291,15 +284,10 @@ export const createContracts = async (isCreatingDynamo: boolean, isCreatingNeo: 
                     if (contractsToCreate.length >= 50 || record === null) {
                         index = index + 1;
 
-                        if (isCreatingDynamo) {
-                            // @ts-ignore
-                            dynamoData.push(...contractsToCreate);
-                        }
 
-                        if (isCreatingNeo) {
-                            // @ts-ignore
-                            await createContractsInNeo4j(contractsToCreate);
-                        }
+                        // @ts-ignore
+                        await createContractsInNeo4j(contractsToCreate);
+
 
                         contractsToCreate.length = 0;
 
@@ -316,78 +304,25 @@ export const createContracts = async (isCreatingDynamo: boolean, isCreatingNeo: 
             if (contractsToCreate.length > 0) {
                 index = index + 1;
 
-                if (isCreatingDynamo) {
-                    // @ts-ignore
-                    dynamoData.push(...contractsToCreate);
-                }
+                // @ts-ignore
+                await createContractsInNeo4j(contractsToCreate);
+                contractsToCreate.length = 0;
 
-                if (isCreatingNeo) {
-                    // @ts-ignore
-                    await createContractsInNeo4j(contractsToCreate);
-                    contractsToCreate.length = 0;
-                }
             }
         });
 
         await new Promise(resolve => parser.on('end', resolve)); // Wait for parsing to finish
         // Process any remaining contracts
         if (contractsToCreate.length > 0) {
-            if (isCreatingNeo) {
-                // @ts-ignore
-                await createContractsInNeo4j(contractsToCreate);
-            }
 
-        }
-
-        if (isCreatingDynamo) {
             // @ts-ignore
-            await writeDynamoDb(dynamoData, file)
+            await createContractsInNeo4j(contractsToCreate);
+
+
         }
 
     }
 };
-
-// @ts-ignore
-const writeDynamoDb = async (dynamoData, file) => {
-
-    const directory = 'dynamo';
-    await fsp.mkdir(directory, { recursive: true }); // Create directory if it doesn't exist
-    const outputFilename = `${directory}/${file.split('.')[0]}.json`;
-    const writeStream = fs.createWriteStream(outputFilename);
-
-    try {
-
-        for (const item of dynamoData) {
-            const dynamoDbItem = {
-                Item: {
-                    id: { S: item.contract.id },
-                    title: { S: item.contract.title },
-                    supplier: { S: item.contract.supplier },
-                    description: { S: item.contract.description },
-                    publishedDate: { S: item.contract.publishedDate },
-                    awardedDate: { S: item.contract.awardedDate },
-                    awardedValue: { N: item.contract.awardedValue.toString() },
-                    issuedByParties: { SS: Array.from(item.contract.issuedByParties) },
-                    category: { S: item.contract.category },
-                    industry: { S: item.contract.industry },
-                    link: { S: item.contract.link },
-                    location: { S: item.contract.location },
-                    awardedTo: { S: item.contractAwardedTo.name }
-                }
-            };
-
-            // Write individual item, followed by a newline
-            writeStream.write(JSON.stringify(dynamoDbItem) + '\n');
-        }
-
-        writeStream.end();
-        dynamoData.length = 0;
-
-    } catch (error) {
-        console.error(error)
-    }
-
-}
 
 // @ts-ignore
 function transformCsvRow(row) {
@@ -411,9 +346,9 @@ function transformCsvRow(row) {
         }
     }
 
-    let awardedValue=0
-    try {        
-        awardedValue = Number(row['awardedValue']);    
+    let awardedValue = 0
+    try {
+        awardedValue = Number(row['awardedValue']);
     } catch (error) {
         logger.error(`Invalid number of ${row['awardedValue']} in column awardedValue`);
         awardedValue = -1;
@@ -433,7 +368,7 @@ function transformCsvRow(row) {
         link: row['link'],
         location: row['location'],
     }
-    
+
     const contractAwardedTo: contractAwardedToNode = {
         name: row['awardedTo'],
     }

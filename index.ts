@@ -107,7 +107,7 @@ const go = async () => {
 
   if (CREATE_CONTRACTS) {
     logger.info("CREATING CONTRACTS")
-    await createContracts(false, true); //add contracts to databases
+    await createContracts(); //add contracts to databases
     // await getContracts()   //get contracts from website
     endAndPrintTiming(timingStart, 'create contracts');
   }
