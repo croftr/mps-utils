@@ -1,3 +1,16 @@
+//orgs that donated to party that awarded them a contract
+MATCH (org:Organisation)-[:DONATED_TO]->(party:Party)-[:TENDERED]->(c:Contract)-[:AWARDED]->(org)
+RETURN org.Name AS organisation, party.partyName AS partyDnatedTo, c.Title AS contractRecieved LIMIT 5
+
+//find org
+MATCH (org:Organisation) WHERE org.Name = "KPMG" RETURN org
+
+//look at just donations 
+MATCH (org:Organisation)-[r:DONATED_TO]-(party:Party) WHERE org.Name = "KPMG" RETURN *
+
+//look at just contracts 
+MATCH (org:Organisation)-[r:AWARDED]-(con:Contract) WHERE org.Name = "KPMG" RETURN con.Title, con.AwardedValue
+
 example .env
 
 DOCKER_HOST=193.203.191.46
@@ -35,3 +48,6 @@ MATCH (c:Contract) RETURN COUNT(c)
 
 //bulk add columns
 id string, title string, supplier string, description string, publisheddate date, awardeddate date, awardedvalue int, issuedbyparties array<string>, category string, industry string, link string, location string, awardedto string
+
+## TIMINGS
+create contracts from csv files takes - 15 hours and 46 minutes

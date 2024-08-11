@@ -475,8 +475,8 @@ export const updateMpStatus = async (ids: Array<number>) => {
 
 
 export const createMpNode = async (mp: Mp) => {
-
-    const partyName = mp.latestParty.name;
+    
+    const partyName = mp.latestParty.name === "Labour (Co-op)" ? "Labour" : mp.latestParty.name;
 
     const cypher: string = `
     MERGE (mp:Mp {id: ${mp.id}})
