@@ -5,7 +5,12 @@ const fs = require('fs');
 import { createDonar } from "./neoManager";
 import { parse } from '@fast-csv/parse';
 
-import neo4j from "neo4j-driver";
+import * as csv from 'csv-parser';
+
+import { pipeline } from 'stream';
+import { promisify } from 'util';
+
+import neo4j, { Record } from "neo4j-driver";
 import { log } from "console";
 
 const ROWS_TO_TAKE = 50;
@@ -90,74 +95,193 @@ const extractParty = (party: string = "") => {
  * @param row 
  * @returns 
  */
-function csvRowToDonar(row: any): any {
+// function csvRowToDonar(row: any): any {
 
-    const acceptedDateParts = row['AcceptedDate'].split('/');
-    const receivedDateParts = row['ReceivedDate'].split('/');
+//     const acceptedDateParts = row['AcceptedDate'].split('/');
+//     const receivedDateParts = row['ReceivedDate'].split('/');
 
-    const formattedAcceptedDate = `${acceptedDateParts[2]}-${acceptedDateParts[1]}-${acceptedDateParts[0]}`;
-    const formattedReceivedDate = `${receivedDateParts[2]}-${receivedDateParts[1]}-${receivedDateParts[0]}`;
+//     const formattedAcceptedDate = `${acceptedDateParts[2]}-${acceptedDateParts[1]}-${acceptedDateParts[0]}`;
+//     const formattedReceivedDate = `${receivedDateParts[2]}-${receivedDateParts[1]}-${receivedDateParts[0]}`;
 
-    return {
-        DonorName: normalizeName(row['DonorName']),
-        DonorStatus: row['DonorStatus'] || '',
-        AccountingUnitName: row['AccountingUnitName'] || '',
-        Postcode: row['Postcode'] || '',
-        NatureOfDonation: row['NatureOfDonation'] || '',
-        DonationType: row['DonationType'] || '',
-        ECRef: row['ECRef'] || '',
-        AcceptedDate: formattedAcceptedDate,
-        ReceivedDate: formattedReceivedDate,
-        Value: parseInt(row['Value'].replace(/[^0-9.]/g, '')) || 0,
-        Party: extractParty(row['RegulatedEntityName']),
-    };
-}
+//     return {
+//         DonorName: normalizeName(row['DonorName']),
+//         DonorStatus: row['DonorStatus'] || '',
+//         AccountingUnitName: row['AccountingUnitName'] || '',
+//         Postcode: row['Postcode'] || '',
+//         NatureOfDonation: row['NatureOfDonation'] || '',
+//         DonationType: row['DonationType'] || '',
+//         ECRef: row['ECRef'] || '',
+//         AcceptedDate: formattedAcceptedDate,
+//         ReceivedDate: formattedReceivedDate,
+//         Value: parseInt(row['Value'].replace(/[^0-9.]/g, '')) || 0,
+//         Party: extractParty(row['RegulatedEntityName']),
+//     };
+// }
 
-export const createDonationsFromCsv = async (from = 2001) => {
-
-    // const csvDirectoryPath = 'D:/donations';
-    const csvDirectoryPath = 'D:/rerun';
-
-    const files = await fs.promises.readdir(csvDirectoryPath);
-    // @ts-ignore
-    const csvFiles = files.filter(file => file.endsWith('.csv'));
-    console.log("converting ", csvFiles);
-
-    for (const file of csvFiles) {
-        logger.info(`Processing file: ${file}`);
-
-        const donationsToCreate: Array<any> = [];
-
-        const parser = parse({ headers: true, delimiter: ',' });
-
-        fs.createReadStream(`${csvDirectoryPath}/${file}`).pipe(parser);
-
-        let index = 0;
-        parser.on('readable', async () => {
-            let record
-            while ((record = parser.read()) !== null) {
-
-                try {
-
-                    const donar = csvRowToDonar(record);
-
-                    if (!donar.AcceptedDate || donar.AcceptedDate && donar.AcceptedDate.includes("Date")) {
-                        donar.AcceptedDate = extractDate(donar.AcceptedDate, donar.ReceivedDate, donar, `${from}-11-19T00:00:00.000Z`) || `${from}-11-19T00:00:00.000Z`;
-                    }
-
-                    if (!donar.ReceivedDate || donar.ReceivedDate && donar.ReceivedDate.includes("Date")) {
-                        donar.ReceivedDate = extractDate(donar.ReceivedDate, donar.AcceptedDate, donar, `${from}-11-19T00:00:00.000Z`) || `${from}-11-19T00:00:00.000Z`;
-                    }
-
-                    await createDonar(donar);
-
-                } catch (error) {
-                    console.error(`Error processing row in ${file}:`, error);
-                }
-            }
-        });
-
-
+function extractDateValue(dateStr: string): string {
+    const dateParts = dateStr.split('/');
+    if (dateParts.some(part => part.includes('undefined'))) {
+        return '1900-01-01';
+    } else {
+        return `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
     }
 }
 
+function csvRowToDonar(row: any, fromYear = 2001): any {
+
+
+    let formattedAcceptedDate = extractDateValue(row._4 || row._17 || row._18);
+    let formattedReceivedDate = extractDateValue(row._17 || row._18 || row._4);
+
+    // Handle cases where both dates are 'undefined'
+    if (formattedAcceptedDate === '1900-01-01' && formattedReceivedDate === '1900-01-01') {
+        formattedAcceptedDate = `${fromYear}-11-19T00:00:00.000Z`;
+        formattedReceivedDate = `${fromYear}-11-19T00:00:00.000Z`;
+    } else if (formattedAcceptedDate === '1900-01-01') {
+        formattedAcceptedDate = formattedReceivedDate;
+    } else if (formattedReceivedDate === '1900-01-01') {
+        formattedReceivedDate = formattedAcceptedDate;
+    }
+
+    return {
+        DonorName: normalizeName(row._6),
+        DonorStatus: row._9 || '',
+        AccountingUnitName: row._5 || '',
+        Postcode: row._12 || '',
+        NatureOfDonation: row._14 || '',
+        DonationType: row._13 || '',
+        ECRef: row._0 || '',
+        AcceptedDate: formattedAcceptedDate,
+        ReceivedDate: formattedReceivedDate,
+        Value: parseInt(row._3.replace(/[^0-9.]/g, '')) || 0,
+        Party: extractParty(row._1),
+    };
+}
+
+// export const createDonationsFromCsv = async (from = 2001) => {
+
+//     const csvDirectoryPath = 'D:/donations';
+//     // const csvDirectoryPath = 'D:/rerun';
+
+//     const files = await fs.promises.readdir(csvDirectoryPath);
+//     // @ts-ignore
+//     const csvFiles = files.filter(file => file.endsWith('.csv'));
+//     console.log("converting ", csvFiles);
+
+//     for (const file of csvFiles) {
+
+//         logger.info(`Processing file: ${file}`);
+
+//         const donationsToCreate: Array<any> = [];
+
+//         const parser = parse({ headers: true, delimiter: ',' });
+
+//         fs.createReadStream(`${csvDirectoryPath}/${file}`).pipe(parser);
+
+//         let index = 0;
+//         parser.on('readable', async () => {
+
+//             if (index % 100 === 0) {
+//                 logger.info(`Created ${index} donations`)
+//             }
+
+//             let record
+//             while ((record = parser.read()) !== null) {
+
+//                 try {
+
+//                     const donar = csvRowToDonar(record);
+
+//                     if (!donar.AcceptedDate || donar.AcceptedDate && donar.AcceptedDate.includes("Date")) {
+//                         donar.AcceptedDate = extractDate(donar.AcceptedDate, donar.ReceivedDate, donar, `${from}-11-19T00:00:00.000Z`) || `${from}-11-19T00:00:00.000Z`;
+//                     }
+
+//                     if (!donar.ReceivedDate || donar.ReceivedDate && donar.ReceivedDate.includes("Date")) {
+//                         donar.ReceivedDate = extractDate(donar.ReceivedDate, donar.AcceptedDate, donar, `${from}-11-19T00:00:00.000Z`) || `${from}-11-19T00:00:00.000Z`;
+//                     }
+
+//                     await createDonar(donar);
+
+//                     index++;
+
+//                 } catch (error) {
+//                     console.error(`Error processing row in ${file}:`, error);
+//                     console.error(`${record}`);
+//                 }
+//             }
+//         });
+
+
+//     }
+// }
+
+
+
+const pipelineAsync = promisify(pipeline);
+
+
+export const createDonationsFromCsv = async (from = 2001) => {
+
+      const csvDirectoryPath = 'D:/donations';
+    // const csvDirectoryPath = 'D:/rerun';
+
+    const files = await fs.promises.readdir(csvDirectoryPath);
+    //@ts-ignore
+    const csvFiles = files.filter((file) => file.endsWith('.csv'));
+
+    let fileCount = 0;
+    let recordCount = 0
+
+    for (const file of csvFiles) {
+
+        logger.info(`Processing file: ${file}`);
+
+        let isHeader = true;
+
+        const readStream = fs.createReadStream(`${csvDirectoryPath}/${file}`, { encoding: 'latin1' }); // Specify 'latin1' encoding
+
+        //@ts-ignore
+        const parser = csv.default({ headers: true, delimiter: ',' });
+
+        try {
+            await pipelineAsync(readStream, parser);
+        } catch (err) {
+            console.error('Pipeline failed.', err);
+        }
+
+        for await (const record of parser) {
+
+            if (isHeader) {
+                continue;
+            }
+
+            try {
+                const donar = csvRowToDonar(record);
+
+                if (!donar.AcceptedDate || (donar.AcceptedDate && donar.AcceptedDate.includes("Date"))) {
+                    donar.AcceptedDate = extractDate(donar.AcceptedDate, donar.ReceivedDate, donar, `${from}-11-19T00:00:00.000Z`) || `${from}-11-19T00:00:00.000Z`;
+                }
+
+                if (!donar.ReceivedDate || (donar.ReceivedDate && donar.ReceivedDate.includes("Date"))) {
+                    donar.ReceivedDate = extractDate(donar.ReceivedDate, donar.AcceptedDate, donar, `${from}-11-19T00:00:00.000Z`) || `${from}-11-19T00:00:00.000Z`;
+                }
+
+
+                await createDonar(donar);
+
+                recordCount++;
+                isHeader = false;
+
+                if (recordCount % 100 === 0) {
+                    logger.info(`Created ${recordCount} donations from ${fileCount} files`);
+                }
+            } catch (error) {
+                console.error(`Error processing row in ${file}:`, error);
+                console.error(`${record}:`, error);
+            }
+        }
+        fileCount++;
+        
+    }
+    logger.info(`Created ${recordCount} donations from ${fileCount} files`);
+}

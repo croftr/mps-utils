@@ -537,9 +537,8 @@ export const createMpNode = async (mp: Mp) => {
 }
 
 const runCypherWithParams = async (cypher: string, session: any, params?: Record<string, any>) => { // Add optional 'params' parameter
-    logger.debug(cypher);
-    try {
-      logger.info(cypher)
+    logger.trace(cypher);
+    try {      
       const result = await session.run(cypher, params); // Pass 'params' to session.run()
       return result;
     } catch (error: any) {
@@ -589,10 +588,11 @@ export const createDonar = async (donar: any) => {
         donorStatus: donar.DonorStatus || '',
         postcode: donar.Postcode || '',
       });
-      if (nodeResult.summary.counters.updates().nodesCreated === 1) { // Assuming runCypher returns a result object with summary
-        logger.info(`Created new donor node: ${donar.DonorName}`);
+
+      if (nodeResult?.summary?.counters.updates().nodesCreated === 1) { // Assuming runCypher returns a result object with summary
+        logger.trace(`Created new donor node: ${donar.DonorName}`);
       } else {
-        logger.info(`Donor node already exists: ${donar.DonorName}`);
+        logger.trace(`Donor node already exists: ${donar.DonorName}`);
       }
   
       const relResult = await runCypherWithParams(relCypher, session, { 
@@ -605,16 +605,15 @@ export const createDonar = async (donar: any) => {
         receivedDate: donar.ReceivedDate,
         amount: donar.Value,
       });
-      if (relResult.summary.counters.updates().relationshipsCreated === 1) {
-        logger.info(`Created new donation relationship for: ${donar.DonorName}`);
+      if (relResult?.summary?.counters.updates().relationshipsCreated === 1) {
+        logger.trace(`Created new donation relationship for: ${donar.DonorName}`);
       } else {
-        logger.info(`Donation relationship already exists for: ${donar.DonorName}`);
+        logger.trace(`Donation relationship already exists for: ${donar.DonorName}`);
       }
     } catch (error: any) {
       if (error.code !== "Neo.ClientError.Schema.ConstraintValidationFailed") {
         logger.error(`Error creating donar or relationship: ${error.message}`);
-        logger.error(nodeCypher);
-        logger.error(relCypher);
+        logger.error(donar);        
       }
     } 
   }
