@@ -1,7 +1,7 @@
 import { setupDataScience, setupNeo, batchDelete, createMpNode, updateMpStatus } from "./src/neoManager";
 import { Mp } from "./src/models/mps";
 import { createParties } from "./src/nodeManager";
-import { createDonations } from "./src/donationsManager";
+import { createDonationsFromCsv } from "./src/donationsManager";
 import { createContracts, getContracts } from "./src/contractsManager";
 import { getMps } from "./src/apicall";
 
@@ -96,7 +96,7 @@ const go = async () => {
 
   if (CREATE_DONATIONS) {
     logger.info("CREATING DONATIONS")
-    await createDonations(Number(process.env.DONATIONS_FROM_YEAR));
+    await createDonationsFromCsv(Number(process.env.DONATIONS_FROM_YEAR));
     endAndPrintTiming(timingStart, 'created Donations');
   }
 

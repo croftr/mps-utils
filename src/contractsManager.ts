@@ -9,6 +9,8 @@ const { Readable } = require('stream');
 const cheerio = require('cheerio');
 const { DateTime } = require("luxon");
 
+import { normalizeName } from "./utils/utils";
+
 import neo4j from "neo4j-driver";
 
 import { contractNode, contractAwardedToNode } from "././models/contracts";
@@ -283,15 +285,9 @@ export const createContracts = async () => {
                     // Create contracts in batches (adjust batch size as needed)
                     if (contractsToCreate.length >= 50 || record === null) {
                         index = index + 1;
-
-
                         // @ts-ignore
                         await createContractsInNeo4j(contractsToCreate);
-
-
                         contractsToCreate.length = 0;
-
-
                     }
                 } catch (error) {
                     console.error(`Error processing row in ${file}:`, error);

@@ -14,6 +14,7 @@ let driver: any;
 const runCypher = async (cypher: string, session: any) => {
     logger.debug(cypher);
     try {
+        logger.info(cypher)
         const result = await session.run(cypher);
         return result;
     } catch (error: any) {
@@ -333,6 +334,10 @@ export const batchDelete = async () => {
 // @ts-ignore
 export const createContract = async (contractAwardedTo: contractAwardedToNode, contract: contractNode, session) => {
 
+    if (!contractAwardedTo.name) {
+        logger.warn(`Organisation with no name awared contract ${contract.title}`)
+    }
+
     // const driver = neo4j.driver(CONNECTION_STRING, neo4j.auth.basic(process.env.NEO4J_USER || '', process.env.NEO4J_PASSWORD || ''));
 
     // Combine queries for better performance
@@ -358,7 +363,7 @@ export const createContract = async (contractAwardedTo: contractAwardedToNode, c
 `;
 
     const parameters = {
-        organisationName: contractAwardedTo.name,
+        organisationName: contractAwardedTo.name.toLowerCase(),
         hasHadContract: true,
         contractId: contract.id,
         title: contract.title,
@@ -531,48 +536,141 @@ export const createMpNode = async (mp: Mp) => {
 
 }
 
-export const createDonar = async (donar: any) => {
+const runCypherWithParams = async (cypher: string, session: any, params?: Record<string, any>) => { // Add optional 'params' parameter
+    logger.debug(cypher);
+    try {
+      logger.info(cypher)
+      const result = await session.run(cypher, params); // Pass 'params' to session.run()
+      return result;
+    } catch (error: any) {
+      if (error.code !== "Neo.ClientError.Schema.ConstraintValidationFailed" && error.code !== "Neo.ClientError.Schema.EquivalentSchemaRuleAlreadyExists") {
+        logger.error(error);
+        logger.error(cypher);
+      }
+    }
+  }
 
-    let type = donar.DonorStatus === "Individual" ? "Individual" : "Organisation";
-
-    const nodeCypher: string = `CREATE (donar:${type} {
-            donar: "${donar.DonorName}",                                
-            Name: "${donar.DonorName}",                                
-            accountingUnitName: "${donar.AccountingUnitName}",
-            donorStatus: "${donar.DonorStatus}",
-            postcode: "${donar.Postcode}"
-            })`;
-
+export const createDonar = async (donar: any) => { 
+    if (!donar.DonorName) {
+      logger.warn(`Got donar with no name`);
+      return; 
+    }
+  
+    const type = donar.DonorStatus === "Individual" ? "Individual" : "Organisation";
+  
+    const nodeCypher: string = `
+      MERGE (donar:${type} { donar: $donarName }) 
+      ON CREATE SET 
+        donar.Name = $donarName, 
+        donar.accountingUnitName = $accountingUnitName,
+        donar.donorStatus = $donorStatus,
+        donar.postcode = $postcode
+    `;
+  
     const relCypher = `
-        MATCH (donar:${type} {donar: "${donar.DonorName}"} )  
-        MATCH (party:Party {partyName: "${donar.Party}"} )     
-        CREATE (donar)-[:DONATED_TO { natureOfDonation: "${donar.NatureOfDonation}", donationType: "${donar.DonationType}", ecRef: "${donar.ECRef}", acceptedDate: datetime("${donar.AcceptedDate}"), receivedDate: datetime("${donar.ReceivedDate}"), amount: ${donar.Value} } ]->(party)`;
+      MATCH (donar:${type} {donar: $donarName} ) 
+      MATCH (party:Party {partyName: $partyName} ) 
+      MERGE (donar)-[donation:DONATED_TO]->(party)
+      ON CREATE SET 
+        donation.natureOfDonation = $natureOfDonation, 
+        donation.donationType = $donationType, 
+        donation.ecRef = $ecRef, 
+        donation.acceptedDate = datetime($acceptedDate), 
+        donation.receivedDate = datetime($receivedDate), 
+        donation.amount = toInteger($amount) 
+    `;
 
-    const session = driver.session();
+    const session = await driver.session();
+  
     try {
-        const result = await runCypher(nodeCypher, session);
+      const nodeResult = await runCypherWithParams(nodeCypher, session, { 
+        donarName: donar.DonorName,
+        accountingUnitName: donar.AccountingUnitName || '', 
+        donorStatus: donar.DonorStatus || '',
+        postcode: donar.Postcode || '',
+      });
+      if (nodeResult.summary.counters.updates().nodesCreated === 1) { // Assuming runCypher returns a result object with summary
+        logger.info(`Created new donor node: ${donar.DonorName}`);
+      } else {
+        logger.info(`Donor node already exists: ${donar.DonorName}`);
+      }
+  
+      const relResult = await runCypherWithParams(relCypher, session, { 
+        donarName: donar.DonorName,
+        partyName: donar.Party,
+        natureOfDonation: donar.NatureOfDonation || '',
+        donationType: donar.DonationType || '',
+        ecRef: donar.ECRef || '',
+        acceptedDate: donar.AcceptedDate,
+        receivedDate: donar.ReceivedDate,
+        amount: donar.Value,
+      });
+      if (relResult.summary.counters.updates().relationshipsCreated === 1) {
+        logger.info(`Created new donation relationship for: ${donar.DonorName}`);
+      } else {
+        logger.info(`Donation relationship already exists for: ${donar.DonorName}`);
+      }
     } catch (error: any) {
-        if (error.code !== "Neo.ClientError.Schema.ConstraintValidationFailed") {
-            logger.error(`Error adding donar node to neo ${error}`);
-            logger.error(nodeCypher);
-        }
-    }
+      if (error.code !== "Neo.ClientError.Schema.ConstraintValidationFailed") {
+        logger.error(`Error creating donar or relationship: ${error.message}`);
+        logger.error(nodeCypher);
+        logger.error(relCypher);
+      }
+    } 
+  }
 
-    try {
-        const result = await runCypher(relCypher, session);
-    } catch (error: any) {
-        if (error.code !== "Neo.ClientError.Schema.ConstraintValidationFailed") {
-            logger.error(`Error adding donar relationship to neo ${error}`);
-            logger.error(relCypher);
-        }
-    }
+// export const createDonar = async (donar: any, session: any) => {
 
-}
+//     console.log("check me ", donar);
+    
+
+//     let type = donar.DonorStatus === "Individual" ? "Individual" : "Organisation";
+
+//     const nodeCypher: string = `CREATE (donar:${type} {
+//             donar: "${donar.DonorName}",                                
+//             Name: "${donar.DonorName}",                                
+//             accountingUnitName: "${donar.AccountingUnitName}",
+//             donorStatus: "${donar.DonorStatus}",
+//             postcode: "${donar.Postcode}"
+//             })`;
+
+//     const relCypher = `
+//         MATCH (donar:${type} {donar: "${donar.DonorName}"} )  
+//         MATCH (party:Party {partyName: "${donar.Party}"} )     
+//         CREATE (donar)-[:DONATED_TO { natureOfDonation: "${donar.NatureOfDonation}", donationType: "${donar.DonationType}", ecRef: "${donar.ECRef}", acceptedDate: datetime("${donar.AcceptedDate}"), receivedDate: datetime("${donar.ReceivedDate}"), amount: ${donar.Value} } ]->(party)`;
+
+
+//     try {
+//         const result = await runCypher(nodeCypher, session);
+//     } catch (error: any) {
+//         if (error.code !== "Neo.ClientError.Schema.ConstraintValidationFailed") {
+//             logger.error(`Error adding donar node to neo ${error}`);
+//             logger.error(nodeCypher);
+//         }
+//     }
+
+//     try {
+//         const result = await runCypher(relCypher, session);
+//     } catch (error: any) {
+//         if (error.code !== "Neo.ClientError.Schema.ConstraintValidationFailed") {
+//             logger.error(`Error adding donar relationship to neo ${error}`);
+//             logger.error(relCypher);
+//         }
+//     }
+
+// }
 
 export const createDonarNode = async (donar: any) => {
 
+    if (!donar.DonorName) {
+        logger.warn(`Got donar with no name`)
+    }
+
+    const name = donar.DonorName.toLowerCase();
+
     const cypher: string = `CREATE (donar:Donar {
-        donar: "${donar.DonorName}",
+        donar: "${name}",
+        Name: "${name}",
         ecRef: "${donar.ECRef}",
         partyName: "${donar.Party}",        
         amount: ${donar.Value},
