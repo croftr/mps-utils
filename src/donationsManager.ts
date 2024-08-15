@@ -222,8 +222,8 @@ const pipelineAsync = promisify(pipeline);
 
 export const createDonationsFromCsv = async (from = 2001) => {
 
-      const csvDirectoryPath = 'D:/donations';
-    // const csvDirectoryPath = 'D:/rerun';
+    // const csvDirectoryPath = 'D:/donations';
+    const csvDirectoryPath = 'D:/rerun';
 
     const files = await fs.promises.readdir(csvDirectoryPath);
     //@ts-ignore
@@ -235,8 +235,6 @@ export const createDonationsFromCsv = async (from = 2001) => {
     for (const file of csvFiles) {
 
         logger.info(`Processing file: ${file}`);
-
-        let isHeader = true;
 
         const readStream = fs.createReadStream(`${csvDirectoryPath}/${file}`, { encoding: 'latin1' }); // Specify 'latin1' encoding
 
@@ -251,37 +249,37 @@ export const createDonationsFromCsv = async (from = 2001) => {
 
         for await (const record of parser) {
 
-            if (isHeader) {
-                continue;
-            }
-
             try {
-                const donar = csvRowToDonar(record);
 
-                if (!donar.AcceptedDate || (donar.AcceptedDate && donar.AcceptedDate.includes("Date"))) {
-                    donar.AcceptedDate = extractDate(donar.AcceptedDate, donar.ReceivedDate, donar, `${from}-11-19T00:00:00.000Z`) || `${from}-11-19T00:00:00.000Z`;
+                const donar = csvRowToDonar(record);                                
+                
+                if (donar.DonorName !== "donorname") { //if name is donorname it must be a header row
+                    if (!donar.AcceptedDate || (donar.AcceptedDate && donar.AcceptedDate.includes("Date"))) {
+                        donar.AcceptedDate = extractDate(donar.AcceptedDate, donar.ReceivedDate, donar, `${from}-11-19T00:00:00.000Z`) || `${from}-11-19T00:00:00.000Z`;
+                    }
+
+                    if (!donar.ReceivedDate || (donar.ReceivedDate && donar.ReceivedDate.includes("Date"))) {
+                        donar.ReceivedDate = extractDate(donar.ReceivedDate, donar.AcceptedDate, donar, `${from}-11-19T00:00:00.000Z`) || `${from}-11-19T00:00:00.000Z`;
+                    }
+
+                    await createDonar(donar);
+
+                    recordCount++;
+
+                    if (recordCount % 100 === 0) {
+                        logger.info(`Created ${recordCount} donations from ${fileCount} files`);
+                    }
                 }
 
-                if (!donar.ReceivedDate || (donar.ReceivedDate && donar.ReceivedDate.includes("Date"))) {
-                    donar.ReceivedDate = extractDate(donar.ReceivedDate, donar.AcceptedDate, donar, `${from}-11-19T00:00:00.000Z`) || `${from}-11-19T00:00:00.000Z`;
-                }
 
-
-                await createDonar(donar);
-
-                recordCount++;
-                isHeader = false;
-
-                if (recordCount % 100 === 0) {
-                    logger.info(`Created ${recordCount} donations from ${fileCount} files`);
-                }
             } catch (error) {
                 console.error(`Error processing row in ${file}:`, error);
                 console.error(`${record}:`, error);
             }
         }
+
         fileCount++;
-        
+
     }
     logger.info(`Created ${recordCount} donations from ${fileCount} files`);
 }

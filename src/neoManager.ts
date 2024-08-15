@@ -543,7 +543,7 @@ const runCypherWithParams = async (cypher: string, session: any, params?: Record
       return result;
     } catch (error: any) {
       if (error.code !== "Neo.ClientError.Schema.ConstraintValidationFailed" && error.code !== "Neo.ClientError.Schema.EquivalentSchemaRuleAlreadyExists") {
-        logger.error(error);
+        logger.error("runCypherWithParams: ", error);
         logger.error(cypher);
       }
     }
@@ -554,7 +554,7 @@ export const createDonar = async (donar: any) => {
       logger.warn(`Got donar with no name`);
       return; 
     }
-  
+
     const type = donar.DonorStatus === "Individual" ? "Individual" : "Organisation";
   
     const nodeCypher: string = `
