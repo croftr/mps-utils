@@ -524,10 +524,7 @@ export const createMpNode = async (mp: Mp) => {
 
     try {
         const session = await driver.session();
-        const result = await session.run(cypher);
-        // logger.debug(result);
-        // logger.debug(cypher);
-
+        const result = await session.run(cypher);    
     } catch (error: any) {
         if (error.code !== "Neo.ClientError.Schema.ConstraintValidationFailed") {
             logger.error(`Error adding to neo ${error}`);
@@ -539,19 +536,23 @@ export const createMpNode = async (mp: Mp) => {
 const runCypherWithParams = async (cypher: string, session: any, params?: Record<string, any>) => { // Add optional 'params' parameter
     logger.trace(cypher);
     try {      
-      const result = await session.run(cypher, params); // Pass 'params' to session.run()
+      const result = await session.run(cypher, params); 
       return result;
     } catch (error: any) {
-      if (error.code !== "Neo.ClientError.Schema.ConstraintValidationFailed" && error.code !== "Neo.ClientError.Schema.EquivalentSchemaRuleAlreadyExists") {
-        logger.error("runCypherWithParams: ", error);
-        logger.error(cypher);
+      logger.error("in runCypherWithParams");
+      if (error.code !== "Neo.ClientError.Schema.ConstraintValidationFailed" && error.code !== "Neo.ClientError.Schema.EquivalentSchemaRuleAlreadyExists") {        
+        logger.error(error);
+      } else {
+        logger.trace(error);
       }
     }
   }
 
-export const createDonar = async (donar: any) => { 
+  export const createDonar = async (donar: any) => { 
+
     if (!donar.DonorName) {
       logger.warn(`Got donar with no name`);
+      logger.warn(donar);
       return; 
     }
 
@@ -567,16 +568,16 @@ export const createDonar = async (donar: any) => {
     `;
   
     const relCypher = `
-      MATCH (donar:${type} {donar: $donarName} ) 
-      MATCH (party:Party {partyName: $partyName} ) 
-      MERGE (donar)-[donation:DONATED_TO]->(party)
-      ON CREATE SET 
-        donation.natureOfDonation = $natureOfDonation, 
-        donation.donationType = $donationType, 
-        donation.ecRef = $ecRef, 
-        donation.acceptedDate = datetime($acceptedDate), 
-        donation.receivedDate = datetime($receivedDate), 
-        donation.amount = toInteger($amount) 
+    MATCH (donar:${type} {donar: $donarName} )
+    MATCH (party:Party {partyName: $partyName} ) 
+    CREATE (donar)-[:DONATED_TO { 
+        natureOfDonation: $natureOfDonation, 
+        donationType: $donationType, 
+        ecRef: $ecRef, 
+        acceptedDate: datetime($acceptedDate), 
+        receivedDate: datetime($receivedDate), 
+        amount: toInteger($amount) 
+    }]->(party)
     `;
 
     const session = await driver.session();
@@ -589,7 +590,7 @@ export const createDonar = async (donar: any) => {
         postcode: donar.Postcode || '',
       });
 
-      if (nodeResult?.summary?.counters.updates().nodesCreated === 1) { // Assuming runCypher returns a result object with summary
+      if (nodeResult?.summary?.counters?._stats?.nodesCreated === 1) { // Assuming runCypher returns a result object with summary
         logger.trace(`Created new donor node: ${donar.DonorName}`);
       } else {
         logger.trace(`Donor node already exists: ${donar.DonorName}`);
@@ -605,7 +606,8 @@ export const createDonar = async (donar: any) => {
         receivedDate: donar.ReceivedDate,
         amount: donar.Value,
       });
-      if (relResult?.summary?.counters.updates().relationshipsCreated === 1) {
+      
+      if (relResult?.summary?.counters?._stats?.relationshipsCreated === 1) {
         logger.trace(`Created new donation relationship for: ${donar.DonorName}`);
       } else {
         logger.trace(`Donation relationship already exists for: ${donar.DonorName}`);
@@ -617,47 +619,6 @@ export const createDonar = async (donar: any) => {
       }
     } 
   }
-
-// export const createDonar = async (donar: any, session: any) => {
-
-//     console.log("check me ", donar);
-    
-
-//     let type = donar.DonorStatus === "Individual" ? "Individual" : "Organisation";
-
-//     const nodeCypher: string = `CREATE (donar:${type} {
-//             donar: "${donar.DonorName}",                                
-//             Name: "${donar.DonorName}",                                
-//             accountingUnitName: "${donar.AccountingUnitName}",
-//             donorStatus: "${donar.DonorStatus}",
-//             postcode: "${donar.Postcode}"
-//             })`;
-
-//     const relCypher = `
-//         MATCH (donar:${type} {donar: "${donar.DonorName}"} )  
-//         MATCH (party:Party {partyName: "${donar.Party}"} )     
-//         CREATE (donar)-[:DONATED_TO { natureOfDonation: "${donar.NatureOfDonation}", donationType: "${donar.DonationType}", ecRef: "${donar.ECRef}", acceptedDate: datetime("${donar.AcceptedDate}"), receivedDate: datetime("${donar.ReceivedDate}"), amount: ${donar.Value} } ]->(party)`;
-
-
-//     try {
-//         const result = await runCypher(nodeCypher, session);
-//     } catch (error: any) {
-//         if (error.code !== "Neo.ClientError.Schema.ConstraintValidationFailed") {
-//             logger.error(`Error adding donar node to neo ${error}`);
-//             logger.error(nodeCypher);
-//         }
-//     }
-
-//     try {
-//         const result = await runCypher(relCypher, session);
-//     } catch (error: any) {
-//         if (error.code !== "Neo.ClientError.Schema.ConstraintValidationFailed") {
-//             logger.error(`Error adding donar relationship to neo ${error}`);
-//             logger.error(relCypher);
-//         }
-//     }
-
-// }
 
 export const createDonarNode = async (donar: any) => {
 
