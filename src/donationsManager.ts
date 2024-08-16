@@ -92,7 +92,7 @@ function extractDateValue(dateStr: string): string {
         logger.error(`extractDateValue ${dateStr}`);
         return '1900-01-01';
     }
-    
+
 }
 
 function csvRowToDonar(row: any, fromYear = 2001) {
@@ -113,7 +113,7 @@ function csvRowToDonar(row: any, fromYear = 2001) {
         AcceptedDate: formattedAcceptedDate,
         ReceivedDate: formattedReceivedDate,
         Value: parseInt(fields[3].replace(/[^0-9.]/g, '')) || 0,
-        Party: extractParty(fields[1]), 
+        Party: extractParty(fields[1]),
     };
 }
 
@@ -130,12 +130,17 @@ export const createDonationsFromCsv = async (from = 2001) => {
         const dir = 'D:/donations';
         // const dir = 'D:/test';
 
-        const csvFiles:Array<string> = []
+        const csvFiles: Array<string> = []
 
         for (const file of fs.readdirSync(dir)) {
             const fullPath: string = path.join(dir, file);
-            csvFiles.push(fullPath);
-        }       
+
+            // Check if it's a file AND has a .csv extension
+            if (fs.statSync(fullPath).isFile() && path.extname(file).toLowerCase() === '.csv') {
+                csvFiles.push(fullPath);
+            }
+            
+        }
 
         logger.info(`Got ${csvFiles.length} csv files`)
 
@@ -153,8 +158,8 @@ export const createDonationsFromCsv = async (from = 2001) => {
             const readStream = fs.createReadStream(file)
             const lineReader = readline.createInterface({ input: readStream });
 
-            for await (const line  of lineReader) {                
- 
+            for await (const line of lineReader) {
+
                 try {
 
                     donar = csvRowToDonar(line);
@@ -168,7 +173,7 @@ export const createDonationsFromCsv = async (from = 2001) => {
                             donar.ReceivedDate = extractDate(donar.ReceivedDate, donar.AcceptedDate, donar, `${from}-11-19T00:00:00.000Z`) || `${from}-11-19T00:00:00.000Z`;
                         }
 
-                        await createDonar(donar);                        
+                        await createDonar(donar);
                         totalRecordCount++;
                         fileRecordCount++;
 
@@ -180,13 +185,13 @@ export const createDonationsFromCsv = async (from = 2001) => {
                     console.error(err);
                     console.error(`Error processing row ${fileRecordCount} in ${file}:`);
                     console.error(donar);
-                }                    
-            }                                   
-            logger.info(`Created ${fileRecordCount} records from ${file}`);            
+                }
+            }
+            logger.info(`Created ${fileRecordCount} records from ${file}`);
         }
         logger.info(`Created ${totalRecordCount} donations from ${fileCount} files`);
     } catch (err) {
-        logger.error("reateDonationsFromCsv")        
-        logger.error(err)        
+        logger.error("reateDonationsFromCsv")
+        logger.error(err)
     }
 }

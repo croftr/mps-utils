@@ -553,7 +553,7 @@ const runCypherWithParams = async (cypher: string, session: any, params?: Record
     if (!donar.DonorName) {
       logger.warn(`Got donar with no name`);
       logger.warn(donar);
-      return; 
+      donar.DonorName = "unidentifiable donor";
     }
 
     const type = donar.DonorStatus === "Individual" ? "Individual" : "Organisation";
