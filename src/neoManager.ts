@@ -3,7 +3,7 @@ import { Mp } from './models/mps';
 import { VotedFor } from './models/relationships';
 import neo4j from "neo4j-driver";
 import { contractAwardedToNode, contractNode, issuedContractRelationship, recievedContractRelationship } from "./models/contracts";
-import { log } from 'console';
+import { normalizeName } from "./utils/utils";
 
 const logger = require('./logger');
 
@@ -336,6 +336,7 @@ export const createContract = async (contractAwardedTo: contractAwardedToNode, c
 
     if (!contractAwardedTo.name) {
         logger.warn(`Organisation with no name awared contract ${contract.title}`)
+        contractAwardedTo.name = "unidentifiable"
     }
 
     // const driver = neo4j.driver(CONNECTION_STRING, neo4j.auth.basic(process.env.NEO4J_USER || '', process.env.NEO4J_PASSWORD || ''));
@@ -363,7 +364,7 @@ export const createContract = async (contractAwardedTo: contractAwardedToNode, c
 `;
 
     const parameters = {
-        organisationName: contractAwardedTo.name.toLowerCase(),
+        organisationName: normalizeName(contractAwardedTo.name),
         hasHadContract: true,
         contractId: contract.id,
         title: contract.title,
@@ -551,10 +552,9 @@ const runCypherWithParams = async (cypher: string, session: any, params?: Record
   export const createDonar = async (donar: any) => { 
 
     if (!donar.DonorName) {
-      logger.warn(`Got donar with no name`);
-      logger.warn(donar);
-      donar.DonorName = "unidentifiable donor";
-    }
+      logger.warn(`Got donar with no name ${donar.DonorStatus} ${donar.AccountingUnitName}`);      
+      donar.DonorName = "unidentifiable";
+    } 
 
     const type = donar.DonorStatus === "Individual" ? "Individual" : "Organisation";
   

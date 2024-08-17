@@ -14,16 +14,17 @@
   "dependencies": {
     "@fast-csv/parse": "^5.0.0",
     "aws-sdk": "^2.1618.0",
-    "cheerio": "^1.0.0-rc.12",    
-    "csv-stringify": "^6.5.0",    
+    "cheerio": "^1.0.0-rc.12",
+    "csv-stringify": "^6.5.0",
     "luxon": "^3.4.4",
     "neo4j-driver": "^5.20.0",
-    "node-fetch": "^2.7.0",    
+    "node-fetch": "^2.7.0",
+    "node-normalizer": "^0.2.0",
     "pino": "^9.0.0",
-    "pino-pretty": "^11.0.0"     
+    "pino-pretty": "^11.0.0"
   },
   "devDependencies": {
-    "@types/node": "^20.12.11",    
+    "@types/node": "^20.12.11",
     "typescript": "^5.4.5"
   },
   "imports": {

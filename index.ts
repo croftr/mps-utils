@@ -13,15 +13,22 @@ const RUN_DATA_SCIENCE = process.env.RUN_DATA_SCIENCE === "true" ? true : false;
 const CREATE_CONTRACTS = process.env.CREATE_CONTRACTS === "true" ? true : false;
 const DELETE_DONARS = process.env.DELETE_DONARS === "true" ? true : false;
 const CREATE_MPS = process.env.CREATE_MPS === "true" ? true : false;
+const QUERY_CONTRACTS = process.env.QUERY_CONTRACTS === "true" ? true : false;
 
 const MP_TAKE_PER_LOOP = 20;
 
 const endAndPrintTiming = (timingStart: number, timingName: string) => {
   // END timing
   let timingEnd = performance.now();
-  logger.info(`<<TIMING>> ${timingName} in ${(timingEnd - timingStart) / 1000} seconds`);
-}
+  let totalSeconds = (timingEnd - timingStart) / 1000;
 
+  const hours = Math.floor(totalSeconds / 3600);
+  totalSeconds %= 3600;
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = Math.floor(totalSeconds % 60);
+
+  logger.info(`<<TIMING>> ${timingName} in ${hours}h ${minutes}m ${seconds}s`);
+};
 /**
  * Order mps by name
  * @param a 
@@ -112,6 +119,13 @@ const go = async () => {
     endAndPrintTiming(timingStart, 'create contracts');
   }
 
+  if (QUERY_CONTRACTS) {
+    logger.info("QUERYING CONTRACTS")
+    await getContracts(); //add contracts to databases
+    // await getContracts()   //get contracts from website
+    endAndPrintTiming(timingStart, 'query contracts');
+  }
+  
   endAndPrintTiming(totalTimeStart, 'Everything complete');
   logger.info('THE END');
 }

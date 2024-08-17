@@ -62,7 +62,7 @@ const writeCsv = async (data: Array<any>, pageNumber: number) => {
 
     const fromPage = pageNumber - CSV_SIZE;
     const outputDir = 'output'; // Set the output directory name
-    const filename = `contracts_2020_${fromPage}_${pageNumber}.csv`
+    const filename = `contracts_2024_${fromPage}_${pageNumber}.csv`
     const filePath = path.join(outputDir, filename);
 
     const csvStream = stringify({ header: true, columns: COLUMNS });
@@ -115,9 +115,22 @@ const extractContractId = (linkId: string) => {
 }
 
 
+/**
+ * LAST_RUN_DATE=17/08/2024
+ * 
+ * This scrapes search results from the html page after a manual query. 
+ * its very painful but there is no api and the cscv dowlonad cant download more than 100 recordss
+ * the results are stored in csv files which can be added to neo running the createContracts function 
+ * 
+ * 1) query "Awarded contract" from here entering date range LAST_RUN_DATE -> TODAY
+ * 2) in the dev tools console find the request that was made and grab the cookie
+ * 3) change the cookie 
+ * 
+ */
 export const getContracts = async () => {
 
-    const cookie = "CF_COOKIES_PREFERENCES_SET=1; CF_AUTH=3odnc5udu0rolkvnbiu2io2vn5; CF_PAGE_TIMEOUT=1716712243246";
+    //change cookie 
+    const cookie = "CF_COOKIES_PREFERENCES_SET=1; CF_AUTH=e6f0gaq9gn0k8c76to006hkq52; CF_PAGE_TIMEOUT=1723885536360";
 
     const ACCEPTED_ERROR_COUNT = 10
     let errorCount = 0;
@@ -256,9 +269,8 @@ export const getContracts = async () => {
 
 export const createContracts = async () => {
 
-    const csvDirectoryPath = 'D:/contracts';
-    // const csvDirectoryPath = 'D:/rerun';
-    // const csvDirectoryPath = './output';
+    // const csvDirectoryPath = 'D:/contracts';    
+    const csvDirectoryPath = './output';
 
     const files = await fs.promises.readdir(csvDirectoryPath);
     // @ts-ignore

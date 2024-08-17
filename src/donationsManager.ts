@@ -177,7 +177,7 @@ export const createDonationsFromCsv = async (from = 2001) => {
                         totalRecordCount++;
                         fileRecordCount++;
 
-                        if (totalRecordCount % 200 === 0) {
+                        if (totalRecordCount % 500 === 0) {
                             logger.info(`Created ${totalRecordCount} donations from ${fileCount} files`);
                         }
                     }
