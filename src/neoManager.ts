@@ -330,20 +330,13 @@ export const batchDelete = async () => {
     }
 }
 
-// @ts-ignore
-export const createContract = async (contractsAwardedTo: Array<contractAwardedToNode>, contract: contractNode, session) => {
+export const createContract = async (contractsAwardedTo: Array<contractAwardedToNode>, contract: contractNode, session: any) => {
 
     if (!contractsAwardedTo[0].name) {
         logger.warn(`Organisation with no name awared contract ${contract.title}`)
         contractsAwardedTo[0].name = "unidentifiable"
     }
 
-    console.log(contract);
-    
-
-    // const driver = neo4j.driver(CONNECTION_STRING, neo4j.auth.basic(process.env.NEO4J_USER || '', process.env.NEO4J_PASSWORD || ''));
-
-    // Combine queries for better performance
     const combinedCypher = `
     MERGE (org:Organisation { Name: $organisationName })
     SET org.hasHadContract = $hasHadContract 
@@ -358,11 +351,11 @@ export const createContract = async (contractsAwardedTo: Array<contractAwardedTo
         con.Industry = $industry,
         con.Link = $link,
         con.Location = $location
-    CREATE (con)-[:AWARDED { AwardedDate: date($awardedDate), relId: toString(con.Title) + "_" + toString(org.Name) }]->(org)  // Explicit conversion to string
+    CREATE (con)-[:AWARDED { AwardedDate: date($awardedDate), relId: toString(con.Title) + "_" + toString(org.Name) }]->(org)  
     WITH con
     UNWIND $issuedByParties AS partyName
     MATCH (party:Party { partyName: partyName })
-    CREATE (party)-[:TENDERED { PublishedDate: date($publishedDate), relId: toString(con.Title) + "_" + toString(party.partyName) }]->(con)  // Explicit conversion to string
+    CREATE (party)-[:TENDERED { PublishedDate: date($publishedDate), relId: toString(con.Title) + "_" + toString(party.partyName) }]->(con)  
 `;
 
     const parameters = {
@@ -375,7 +368,7 @@ export const createContract = async (contractsAwardedTo: Array<contractAwardedTo
         description: contract.description,
         publishedDate: contract.publishedDate,
         awardedDate: contract.awardedDate,
-        issuedByParties: contract.issuedByParties, // Pass as an array
+        issuedByParties: contract.issuedByParties,
         supplier: contract.supplier,
         industry: contract.industry,
         link: contract.link,
@@ -385,19 +378,33 @@ export const createContract = async (contractsAwardedTo: Array<contractAwardedTo
     // const session = driver.session();
     try {
         await session.run(combinedCypher, parameters);
-        // logger.info(`Created contract ${contract.title} ${contract.publishedDate}`)
-    } catch (error) {
 
-        //@ts-ignore
-        if (error.message.startsWith("Relationship")) {
-            //constraint violation
-            //@ts-ignore
-            logger.trace(error.message);
-        } else {
-            //@ts-ignore
-            logger.error(error.message)
+        if (contractsAwardedTo.length > 1) {
+            // Create additional AWARDED relationships
+            for (let i = 1; i < contractsAwardedTo.length; i++) {
+                const additionalOrg = contractsAwardedTo[i];
+                if (!additionalOrg.name) {
+                    logger.warn(`Organisation with no name awarded contract ${contract.title}`);
+                    additionalOrg.name = "unidentifiable";
+                }
+
+                const additionalCypher = `
+                MATCH (con:Contract { ContractId: $contractId })
+                MERGE (org:Organisation { Name: $additionalOrgName })
+                SET org.hasHadContract = true
+                CREATE (con)-[:AWARDED { AwardedDate: date($awardedDate), relId: toString(con.Title) + "_" + toString(org.Name) }]->(org)
+                `;
+                const additionalParameters = {
+                    contractId: contract.id,
+                    additionalOrgName: additionalOrg.name,
+                    awardedDate: contract.awardedDate
+                };
+                await session.run(additionalCypher, additionalParameters);
+            }
         }
-        //lots of constraint violations
+
+    } catch (err) {
+        console.error(err)
     } finally {
         // await session.close();
     }
@@ -483,7 +490,7 @@ export const updateMpStatus = async (ids: Array<number>) => {
 
 
 export const createMpNode = async (mp: Mp) => {
-    
+
     const partyName = mp.latestParty.name === "Labour (Co-op)" ? "Labour" : mp.latestParty.name;
 
     const cypher: string = `
@@ -527,7 +534,7 @@ export const createMpNode = async (mp: Mp) => {
 
     try {
         const session = await driver.session();
-        const result = await session.run(cypher);    
+        const result = await session.run(cypher);
     } catch (error: any) {
         if (error.code !== "Neo.ClientError.Schema.ConstraintValidationFailed") {
             logger.error(`Error adding to neo ${error}`);
@@ -538,28 +545,28 @@ export const createMpNode = async (mp: Mp) => {
 
 const runCypherWithParams = async (cypher: string, session: any, params?: Record<string, any>) => { // Add optional 'params' parameter
     logger.trace(cypher);
-    try {      
-      const result = await session.run(cypher, params); 
-      return result;
+    try {
+        const result = await session.run(cypher, params);
+        return result;
     } catch (error: any) {
-      logger.error("in runCypherWithParams");
-      if (error.code !== "Neo.ClientError.Schema.ConstraintValidationFailed" && error.code !== "Neo.ClientError.Schema.EquivalentSchemaRuleAlreadyExists") {        
-        logger.error(error);
-      } else {
-        logger.trace(error);
-      }
+        logger.error("in runCypherWithParams");
+        if (error.code !== "Neo.ClientError.Schema.ConstraintValidationFailed" && error.code !== "Neo.ClientError.Schema.EquivalentSchemaRuleAlreadyExists") {
+            logger.error(error);
+        } else {
+            logger.trace(error);
+        }
     }
-  }
+}
 
-  export const createDonar = async (donar: any) => { 
+export const createDonar = async (donar: any) => {
 
     if (!donar.DonorName) {
-      logger.warn(`Got donar with no name ${donar.DonorStatus} ${donar.AccountingUnitName}`);      
-      donar.DonorName = "unidentifiable";
-    } 
+        logger.warn(`Got donar with no name ${donar.DonorStatus} ${donar.AccountingUnitName}`);
+        donar.DonorName = "unidentifiable";
+    }
 
     const type = donar.DonorStatus === "Individual" ? "Individual" : "Organisation";
-  
+
     const nodeCypher: string = `
       MERGE (donar:${type} { donar: $donarName }) 
       ON CREATE SET 
@@ -568,7 +575,7 @@ const runCypherWithParams = async (cypher: string, session: any, params?: Record
         donar.donorStatus = $donorStatus,
         donar.postcode = $postcode
     `;
-  
+
     const relCypher = `
     MATCH (donar:${type} {donar: $donarName} )
     MATCH (party:Party {partyName: $partyName} ) 
@@ -583,44 +590,44 @@ const runCypherWithParams = async (cypher: string, session: any, params?: Record
     `;
 
     const session = await driver.session();
-  
-    try {
-      const nodeResult = await runCypherWithParams(nodeCypher, session, { 
-        donarName: donar.DonorName,
-        accountingUnitName: donar.AccountingUnitName || '', 
-        donorStatus: donar.DonorStatus || '',
-        postcode: donar.Postcode || '',
-      });
 
-      if (nodeResult?.summary?.counters?._stats?.nodesCreated === 1) { // Assuming runCypher returns a result object with summary
-        logger.trace(`Created new donor node: ${donar.DonorName}`);
-      } else {
-        logger.trace(`Donor node already exists: ${donar.DonorName}`);
-      }
-  
-      const relResult = await runCypherWithParams(relCypher, session, { 
-        donarName: donar.DonorName,
-        partyName: donar.Party,
-        natureOfDonation: donar.NatureOfDonation || '',
-        donationType: donar.DonationType || '',
-        ecRef: donar.ECRef || '',
-        acceptedDate: donar.AcceptedDate,
-        receivedDate: donar.ReceivedDate,
-        amount: donar.Value,
-      });
-      
-      if (relResult?.summary?.counters?._stats?.relationshipsCreated === 1) {
-        logger.trace(`Created new donation relationship for: ${donar.DonorName}`);
-      } else {
-        logger.trace(`Donation relationship already exists for: ${donar.DonorName}`);
-      }
+    try {
+        const nodeResult = await runCypherWithParams(nodeCypher, session, {
+            donarName: donar.DonorName,
+            accountingUnitName: donar.AccountingUnitName || '',
+            donorStatus: donar.DonorStatus || '',
+            postcode: donar.Postcode || '',
+        });
+
+        if (nodeResult?.summary?.counters?._stats?.nodesCreated === 1) { // Assuming runCypher returns a result object with summary
+            logger.trace(`Created new donor node: ${donar.DonorName}`);
+        } else {
+            logger.trace(`Donor node already exists: ${donar.DonorName}`);
+        }
+
+        const relResult = await runCypherWithParams(relCypher, session, {
+            donarName: donar.DonorName,
+            partyName: donar.Party,
+            natureOfDonation: donar.NatureOfDonation || '',
+            donationType: donar.DonationType || '',
+            ecRef: donar.ECRef || '',
+            acceptedDate: donar.AcceptedDate,
+            receivedDate: donar.ReceivedDate,
+            amount: donar.Value,
+        });
+
+        if (relResult?.summary?.counters?._stats?.relationshipsCreated === 1) {
+            logger.trace(`Created new donation relationship for: ${donar.DonorName}`);
+        } else {
+            logger.trace(`Donation relationship already exists for: ${donar.DonorName}`);
+        }
     } catch (error: any) {
-      if (error.code !== "Neo.ClientError.Schema.ConstraintValidationFailed") {
-        logger.error(`Error creating donar or relationship: ${error.message}`);
-        logger.error(donar);        
-      }
-    } 
-  }
+        if (error.code !== "Neo.ClientError.Schema.ConstraintValidationFailed") {
+            logger.error(`Error creating donar or relationship: ${error.message}`);
+            logger.error(donar);
+        }
+    }
+}
 
 export const createDonarNode = async (donar: any) => {
 
