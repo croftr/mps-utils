@@ -11,6 +11,7 @@ const { DateTime } = require("luxon");
 
 import { normalizeName } from "./utils/utils";
 
+
 import neo4j from "neo4j-driver";
 
 import { contractNode, contractAwardedToNode } from "././models/contracts";
@@ -383,11 +384,14 @@ function transformCsvRow(row) {
         location: row['location'],
     }
 
-    const contractAwardedTo: contractAwardedToNode = {
-        name: row['awardedTo'],
-    }
+    const contractsAwardedTo: Array<contractAwardedToNode> = []
 
-    return { contract, contractAwardedTo }
+    const namesArray = row['awardedTo'] ? row['awardedTo'].split(",") : ["unidentifiable"]
+
+    //@ts-ignore
+    namesArray.forEach(i => contractsAwardedTo.push({ name: normalizeName(i) }) );
+    
+    return { contract, contractsAwardedTo }
 
 }
 
@@ -399,7 +403,7 @@ async function createContractsInNeo4j(contracts) {
     const session = driver.session();
     try {
         for (const item of contracts) {
-            await createContract(item.contractAwardedTo, item.contract, session);
+            await createContract(item.contractsAwardedTo, item.contract, session);
         }
         logger.info(`Created ${contracts.length} contracts in neo`)
         // TODO 1 second delate here is it necessary?

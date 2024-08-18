@@ -3,7 +3,6 @@ import { Mp } from './models/mps';
 import { VotedFor } from './models/relationships';
 import neo4j from "neo4j-driver";
 import { contractAwardedToNode, contractNode, issuedContractRelationship, recievedContractRelationship } from "./models/contracts";
-import { normalizeName } from "./utils/utils";
 
 const logger = require('./logger');
 
@@ -332,12 +331,15 @@ export const batchDelete = async () => {
 }
 
 // @ts-ignore
-export const createContract = async (contractAwardedTo: contractAwardedToNode, contract: contractNode, session) => {
+export const createContract = async (contractsAwardedTo: Array<contractAwardedToNode>, contract: contractNode, session) => {
 
-    if (!contractAwardedTo.name) {
+    if (!contractsAwardedTo[0].name) {
         logger.warn(`Organisation with no name awared contract ${contract.title}`)
-        contractAwardedTo.name = "unidentifiable"
+        contractsAwardedTo[0].name = "unidentifiable"
     }
+
+    console.log(contract);
+    
 
     // const driver = neo4j.driver(CONNECTION_STRING, neo4j.auth.basic(process.env.NEO4J_USER || '', process.env.NEO4J_PASSWORD || ''));
 
@@ -364,7 +366,7 @@ export const createContract = async (contractAwardedTo: contractAwardedToNode, c
 `;
 
     const parameters = {
-        organisationName: normalizeName(contractAwardedTo.name),
+        organisationName: contractsAwardedTo[0].name,
         hasHadContract: true,
         contractId: contract.id,
         title: contract.title,

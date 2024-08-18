@@ -52,7 +52,7 @@ export type contractNode = {
 }
 
 export type contractAwardedToNode = {
-    name: string,    
+    name: string|undefined,    
 }
 
 export type dynamoItem = {
