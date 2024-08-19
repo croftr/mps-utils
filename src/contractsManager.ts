@@ -276,8 +276,8 @@ export const getContracts = async () => {
 
 export const createContracts = async () => {
 
-    // const csvDirectoryPath = 'D:/contracts';    
-    const csvDirectoryPath = './output';
+    const csvDirectoryPath = 'D:/contracts';    
+    // const csvDirectoryPath = './output';
 
     const files = await fs.promises.readdir(csvDirectoryPath);
     // @ts-ignore

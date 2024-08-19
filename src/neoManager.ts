@@ -404,7 +404,7 @@ export const createContract = async (contractsAwardedTo: Array<contractAwardedTo
         }
 
     } catch (err) {
-        console.error(err)
+        // console.error(err)
     } finally {
         // await session.close();
     }
@@ -568,16 +568,14 @@ export const createDonar = async (donar: any) => {
     const type = donar.DonorStatus === "Individual" ? "Individual" : "Organisation";
 
     const nodeCypher: string = `
-      MERGE (donar:${type} { donar: $donarName }) 
-      ON CREATE SET 
-        donar.Name = $donarName, 
+      MERGE (donar:${type} { Name: $donarName }) 
+      ON CREATE SET         
         donar.accountingUnitName = $accountingUnitName,
         donar.donorStatus = $donorStatus,
-        donar.postcode = $postcode
-    `;
+        donar.postcode = $postcode`;
 
     const relCypher = `
-    MATCH (donar:${type} {donar: $donarName} )
+    MATCH (donar:${type} { Name: $donarName} )
     MATCH (party:Party {partyName: $partyName} ) 
     CREATE (donar)-[:DONATED_TO { 
         natureOfDonation: $natureOfDonation, 
@@ -586,8 +584,7 @@ export const createDonar = async (donar: any) => {
         acceptedDate: datetime($acceptedDate), 
         receivedDate: datetime($receivedDate), 
         amount: toInteger($amount) 
-    }]->(party)
-    `;
+    }]->(party)`;
 
     const session = await driver.session();
 
@@ -627,61 +624,6 @@ export const createDonar = async (donar: any) => {
             logger.error(donar);
         }
     }
-}
-
-export const createDonarNode = async (donar: any) => {
-
-    if (!donar.DonorName) {
-        logger.warn(`Got donar with no name`)
-    }
-
-    const name = donar.DonorName.toLowerCase();
-
-    const cypher: string = `CREATE (donar:Donar {
-        donar: "${name}",
-        Name: "${name}",
-        ecRef: "${donar.ECRef}",
-        partyName: "${donar.Party}",        
-        amount: ${donar.Value},
-        acceptedDate: datetime("${donar.AcceptedDate}"),
-        receivedDate: datetime("${donar.ReceivedDate}"),                
-        accountingUnitName: "${donar.AccountingUnitName}",
-        donorStatus: "${donar.DonorStatus}",
-        postcode: "${donar.Postcode}",
-        donationType: "${donar.DonationType}",
-        postcode: "${donar.Postcode}",
-        natureOfDonation: "${donar.NatureOfDonation}",
-        postcode: "${donar.Postcode}"             
-        })`;
-
-    try {
-        const session = driver.session();
-        const result = await session.run(cypher);
-    } catch (error: any) {
-        if (error.code !== "Neo.ClientError.Schema.ConstraintValidationFailed") {
-            logger.error(`Error adding to neo ${error}`);
-            logger.error(cypher);
-
-        }
-    }
-}
-
-export const createDonarRelationships = async () => {
-
-    logger.info(`Createding donar relationships`);
-
-    const cypher = `MATCH (party:Party) MATCH (donar:Donar {partyName: party.partyName}) CREATE (donar)-[:DONATED_TO]->(party)`;
-
-    const session = driver.session();
-    try {
-        const result = await runCypher(cypher, session);
-    } catch (error: any) {
-        if (error.code !== "Neo.ClientError.Schema.ConstraintValidationFailed") {
-            logger.error(`Error adding to neo ${error}`);
-        }
-    }
-
-    logger.info(`Donar relationships created`);
 }
 
 export const createDivisionNode = async (division: Division) => {
