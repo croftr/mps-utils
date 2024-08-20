@@ -377,8 +377,9 @@ export const createContract = async (contractsAwardedTo: Array<contractAwardedTo
 
     // const session = driver.session();
     try {
+        
         await session.run(combinedCypher, parameters);
-
+        
         if (contractsAwardedTo.length > 1) {
             // Create additional AWARDED relationships
             for (let i = 1; i < contractsAwardedTo.length; i++) {
@@ -404,6 +405,7 @@ export const createContract = async (contractsAwardedTo: Array<contractAwardedTo
         }
 
     } catch (err) {
+        // logger.error("error in createContract")
         // console.error(err)
     } finally {
         // await session.close();

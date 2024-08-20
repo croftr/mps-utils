@@ -276,8 +276,8 @@ export const getContracts = async () => {
 
 export const createContracts = async () => {
 
-    // const csvDirectoryPath = 'D:/contracts';    
-    const csvDirectoryPath = './output';
+    const csvDirectoryPath = 'D:/contracts';    
+    // const csvDirectoryPath = './output';
 
     const files = await fs.promises.readdir(csvDirectoryPath);
     // @ts-ignore
@@ -369,7 +369,8 @@ function transformCsvRow(row) {
         awardedValue = -1;
     }
 
-    const industry = row['industry'] ? row['industry'].split("-")[0] : "unidentifiable"; 
+    const industry = row['industry'] ? row['industry'].split("-")[0]||"" : "unidentifiable"; 
+    let normalisedIndustry =  industry.replace(/\bservices\b/gi, '').trim().toLowerCase();
     const link = row['link'] ? row['link'].split("?")[0] : "";
 
     const contract: contractNode = {
@@ -382,7 +383,7 @@ function transformCsvRow(row) {
         awardedValue,
         issuedByParties: row['issuedByParties'].split(','),
         category: row['category'],
-        industry: industry ? industry.toLowerCase : "unidentifiable",
+        industry: normalisedIndustry,
         link: link,
         location: row['location'],
     }
