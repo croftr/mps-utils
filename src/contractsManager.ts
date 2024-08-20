@@ -369,6 +369,9 @@ function transformCsvRow(row) {
         awardedValue = -1;
     }
 
+    const industry = row['industry'] ? row['industry'].split("-")[0] : "unidentifiable"; 
+    const link = row['link'] ? row['link'].split("?")[0] : "";
+
     const contract: contractNode = {
         id: row['id'],
         title: row['title'],
@@ -379,8 +382,8 @@ function transformCsvRow(row) {
         awardedValue,
         issuedByParties: row['issuedByParties'].split(','),
         category: row['category'],
-        industry: row['industry'],
-        link: row['link'],
+        industry: industry ? industry.toLowerCase : "unidentifiable",
+        link: link,
         location: row['location'],
     }
 
