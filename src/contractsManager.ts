@@ -28,7 +28,7 @@ const partyInPower = [
     { parties: "Labour", fromDate: new Date("1997-05-02"), toDate: new Date("2010-05-11") },
     { parties: "Conservative,Liberal Democrat", fromDate: new Date("2010-05-11"), toDate: new Date("2015-05-08") },
     { parties: "Conservative", fromDate: new Date("2015-05-08"), toDate: new Date("2024-07-01") },
-    { parties: "Labour", fromDate: new Date("2024-07-01"), toDate: new Date("2030-01-28") },
+    { parties: "Labour", fromDate: new Date("2024-07-02"), toDate: new Date("2030-01-28") },
 ];
 
 const COLUMNS = [
