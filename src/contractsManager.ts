@@ -359,12 +359,13 @@ const normalizeIndustry = (rawIndustry: string) => {
     ];
 
     const constructionKeywords = [
-        "construction", "engineering", "building", "architectural", "refurbishment", "works", "installation", "concrete", "surfacing work",
-        "infrastructure", "civil", "mechanical", "structural", "renovation", "maintenance", "repair", "excavating", "metalwork", "joinery", "tipper"
+        "construction", "engineering", "building", "architectural", "refurbishment", "works", "installation", "concrete", "surfacing work", "painting", "landscaping ", "roof", "insulation",
+        "infrastructure", "civil", "mechanical", "structural", "renovation", "maintenance", "repair", "excavating", "metalwork", "joinery", "tipper", "Decoration", "glazing", "ironmongery",
+        "scaffolding", "masonry", "brick", "skip", "hoists", "fencing"
     ];
 
     const healthKeywords = [
-        "health", "social work", "medical", "healthcare", "hospital", "clinic", "pharmaceutical", "therapy", "wellness"
+        "health", "social work", "medical", "healthcare", "hospital", "clinic", "pharmaceutical", "therapy", "wellness", "counselling"
     ];
 
     const researchKeywords = [
@@ -384,9 +385,9 @@ const normalizeIndustry = (rawIndustry: string) => {
     ];
 
     const transportKeywords = [
-        "aviation", "airport", "train", "car", "transport", "vehicle", "automotive", "railway", "air-charter",
-        "shipping", "maritime", "logistics", "freight", "trucking", "haulage", "delivery", "transit",
-        "transportation", "mobility", "shipping", "airline", "bus", "taxi", "ride-sharing", "vans", "signage","highway","helicopters"
+        "aviation", "airport", "train", "car", "transport", "vehicle", "automotive", "railway", "air-charter", "traffic",
+        "shipping", "maritime", "logistics", "freight", "trucking", "haulage", "delivery", "transit", "marine",
+        "transportation", "mobility", "shipping", "airline", "bus", "taxi", "ride-sharing", "vans", "signage", "highway", "helicopters"
     ];
 
     const electricalKeywords = [
@@ -397,11 +398,11 @@ const normalizeIndustry = (rawIndustry: string) => {
 
     const retailKeywords = ["retail", "clothing", "footwear", "luggage", "accessories", "fashion"];
 
-    const hospitalityKeywords = ["food", "beverages", "tobacco", "restaurant", "hotel", "catering", "pub", "eating", "drink", "ice cream", "school meals", "cafeteria"];
+    const hospitalityKeywords = ["food", "beverages", "tobacco", "restaurant", "hotel", "catering", "pub", "eating", "drink", "ice cream", "school meals", "cafeteria", "pastry", "bread", "cake", "coffee", "tea", "meat"];
 
     const agricultureKeywords = ["agricultural", "forestry", "horticultural", "aquacultural", "apicultural", "farming", "tractors", "dairy"];
 
-    const printingKeywords = ["print", "Photocopiers", "newspapers", "newspaper", "journals", "magazines", "magasines", "periodicals", "book", "library"];
+    const printingKeywords = ["print", "Photocopiers", "newspapers", "newspaper", "journals", "magazines", "magasines", "periodicals", "book", "library", "photographs", "photo"];
 
     const foreignKeywords = ["foreign", "Foreign ", "foreign-affairs", "international", "embassy", "consulate", "diplomacy", "trade agreement", "global", "tractor"];
 
@@ -417,24 +418,27 @@ const normalizeIndustry = (rawIndustry: string) => {
 
     const socialServicesKeywords = ["welfare", "children", "playground", "social"];
 
-    const sportsKeywords = ["sports", "recreation", "leisure", "fitness", "gym", "athletic", "exercise", "recreational", "sport", "culture","bicycles", "cultural", "sporting", "recreational"];
+    const sportsKeywords = ["sports", "recreation", "leisure", "fitness", "gym", "athletic", "exercise", "recreational", "sport", "culture", "bicycles", "cultural", "sporting", "recreational", "games", "toys"];
 
     const furnishingKeywords = ["furnished", "furniture", "furnishings", "interior design"];
 
     const cleaningKeywords = ["cleaning", "sanitation", "hygiene", "janitorial", "clean"];
 
-    const securityKeywords = ["safety", "security", "fire doors", "firefighting", "surveillance", "fire", "extinguishers", "protective", "protective" ,"protection", "alarm", "Speed camera"];
+    const securityKeywords = ["safety", "security", "fire doors", "firefighting", "surveillance", "fire", "extinguishers", "protective", "protective", "protection", "alarm", "Speed camera"];
 
-    const wasteKeywords = ["pest","pollution", "decontamination","refuse", "waste", "asbestos", "disposal", "hazardous", "recycling", "disposal","rubbish" , "bins", "incinerators", "toxic", "radioactive", "sewage", "contaminated", "cesspool","septic tank"]
+    const wasteKeywords = ["pest", "pest-control", "pollution", "decontamination", "refuse", "waste", "asbestos", "disposal", "hazardous", "recycling", "disposal", "rubbish", "bins", "incinerators", "toxic", "radioactive", "sewage", "contaminated", "cesspool", "septic tank"]
 
-    const machineryKeywords =["pumps","x-ray","Photographic","spectrometer", "microscope", "armour plating", "instruments", "spray booths", "machine", "apparatus", "laboratory" , "mowers", "spectrometers", "analysers",  "centrifuges", "heating equipment", "navigational", "spotlights","appliances","generators"];
+    const machineryKeywords = ["equipment", "ventilation", "camera", "cameras", "phone", "pumps", "x-ray", "photographic", "spectrometer", "microscope", "armour plating", "instruments", "spray booths", "machine", "apparatus", "laboratory", "mowers", "spectrometers", "analysers", "centrifuges", "heating equipment", "navigational", "spotlights", "appliances", "generators"];
 
-    const financeKeywords = ["bank", "banking", "financial", "finance", "insurance", "pensions", "pension", "treasury", "investment" ];
+    const financeKeywords = ["bank", "banking", "financial", "finance", "insurance", "pensions", "pension", "treasury", "investment"];
 
-    const  energyKeywords = ["oil","gas","solar","wind","tidal","gas"]
+    const energyKeywords = ["oil", "gas", "solar", "wind", "tidal", "gas"]
 
-    const  advertisingKeywords = ["advertising ","marketing"]
+    const advertisingKeywords = ["advertising ", "marketing"]
 
+    const officeKeywords = ["office", "chair", "desk"]
+
+    // officeSupplies
 
     if (animalKeywords.some(keyword => industry.includes(keyword))) {
         return "Animals";
@@ -453,7 +457,7 @@ const normalizeIndustry = (rawIndustry: string) => {
     } else if (hospitalityKeywords.some(keyword => industry.includes(keyword))) {
         return "Hospitality";
     } else if (advertisingKeywords.some(keyword => industry.includes(keyword))) {
-        return "Advertising and Marketing";        
+        return "Advertising and Marketing";
     } else if (retailKeywords.some(keyword => industry.includes(keyword))) {
         return "Retail"
     } else if (staffingKeywords.some(keyword => industry.includes(keyword))) {
@@ -461,11 +465,11 @@ const normalizeIndustry = (rawIndustry: string) => {
     } else if (foreignKeywords.some(keyword => industry.includes(keyword))) {
         return "Foreign Affairs";
     } else if (furnishingKeywords.some(keyword => industry.includes(keyword))) {
-        return "Furnishing";    
+        return "Furnishing";
     } else if (financeKeywords.some(keyword => industry.includes(keyword))) {
-        return "Finannce";
+        return "Finance";
     } else if (energyKeywords.some(keyword => industry.includes(keyword))) {
-        return "Energy";    
+        return "Energy";
     } else if (consultingKeywords.some(keyword => industry.includes(keyword))) {
         return "Consultancy";
     } else if (trainingKeywords.some(keyword => industry.includes(keyword))) {
@@ -476,8 +480,6 @@ const normalizeIndustry = (rawIndustry: string) => {
         return "Safety and Security";
     } else if (wasteKeywords.some(keyword => industry.includes(keyword))) {
         return "Waste Management";
-    } else if (machineryKeywords.some(keyword => industry.includes(keyword))) {
-        return "Machinery and Equipment";
     } else if (cleaningKeywords.some(keyword => industry.includes(keyword))) {
         return "Cleaning";
     } else if (printingKeywords.some(keyword => industry.includes(keyword))) {
@@ -492,8 +494,12 @@ const normalizeIndustry = (rawIndustry: string) => {
         return "Postal and Courier Services";
     } else if (socialServicesKeywords.some(keyword => industry.includes(keyword))) {
         return "Social Services";
-    } else if (sportsKeywords.some(keyword => industry.includes(keyword))) {
+    } else if (sportsKeywords.some(keyword => industry.includes(keyword))) {        
         return "Sports and Recreation";
+    } else if (officeKeywords.some(keyword => industry.includes(keyword))) {        
+        return "Office supplies";
+    } else if (machineryKeywords.some(keyword => industry.includes(keyword))) {
+        return "Machinery and Equipment";
     } else {
         return normalizedIndustry || "unidentifiable";
     }
