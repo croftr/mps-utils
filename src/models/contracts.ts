@@ -48,7 +48,8 @@ export type contractNode = {
     category: string,
     industry: string,
     link: string,
-    location: string
+    location: string,
+    originalIndustry: string
 }
 
 export type contractAwardedToNode = {

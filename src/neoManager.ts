@@ -349,6 +349,7 @@ export const createContract = async (contractsAwardedTo: Array<contractAwardedTo
         con.AwardedDate = date($awardedDate),
         con.Supplier = $supplier,
         con.Industry = $industry,
+        con.OriginalIndustry = $originalIndustry,
         con.Link = $link,
         con.Location = $location
     CREATE (con)-[:AWARDED { AwardedDate: date($awardedDate), relId: toString(con.Title) + "_" + toString(org.Name) }]->(org)  
@@ -372,7 +373,8 @@ export const createContract = async (contractsAwardedTo: Array<contractAwardedTo
         supplier: contract.supplier,
         industry: contract.industry,
         link: contract.link,
-        location: contract.location
+        location: contract.location,
+        originalIndustry: contract.originalIndustry
     };
 
     // const session = driver.session();

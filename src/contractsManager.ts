@@ -276,7 +276,7 @@ export const getContracts = async () => {
 
 export const createContracts = async () => {
 
-    const csvDirectoryPath = 'D:/contracts';    
+    const csvDirectoryPath = 'D:/contracts';
     // const csvDirectoryPath = './output';
 
     const files = await fs.promises.readdir(csvDirectoryPath);
@@ -339,6 +339,166 @@ export const createContracts = async () => {
     }
 };
 
+const normalizeIndustry = (rawIndustry: string) => {
+
+    if (!rawIndustry) return "unidentifiable";
+
+    if (!rawIndustry) return "unidentifiable";
+
+    const lastHyphenIndex = rawIndustry.lastIndexOf("-"); // Find the last hyphen's index
+
+    const normalizedIndustry = lastHyphenIndex !== -1
+        ? rawIndustry.substring(0, lastHyphenIndex).trim()  // Remove everything after the last hyphen
+        : rawIndustry; // If no hyphen, keep the original string
+
+    const industry = normalizedIndustry.trim().toLowerCase();
+
+    const itKeywords = [
+        "it", "software", "computer", "data", "technical", "internet", "network", "hardware", "electronic",
+        "telecommunications", "system", "technology", "digital", "programming", "web", "cloud", "cybersecurity", "servers"
+    ];
+
+    const constructionKeywords = [
+        "construction", "engineering", "building", "architectural", "refurbishment", "works", "installation", "concrete", "surfacing work",
+        "infrastructure", "civil", "mechanical", "structural", "renovation", "maintenance", "repair", "excavating", "metalwork", "joinery", "tipper"
+    ];
+
+    const healthKeywords = [
+        "health", "social work", "medical", "healthcare", "hospital", "clinic", "pharmaceutical", "therapy", "wellness"
+    ];
+
+    const researchKeywords = [
+        "development", "research", "innovation", "laboratory", "scientific", "experiment", "study", "analysis", "investigation"
+    ];
+
+    const consultingKeywords = [
+        "consult", "advisory", "consulting", "advice", "guidance", "strategy", "planning", "management"
+    ];
+
+    const animalKeywords = [
+        "dog", "horse", "animal", "veterinary", "pet", "livestock", "agriculture", "farming"
+    ];
+
+    const trainingKeywords = [
+        "training", "education", "learning", "development", "coaching", "instruction", "workshop", "seminar"
+    ];
+
+    const transportKeywords = [
+        "aviation", "airport", "train", "car", "transport", "vehicle", "automotive", "railway", "air-charter",
+        "shipping", "maritime", "logistics", "freight", "trucking", "haulage", "delivery", "transit",
+        "transportation", "mobility", "shipping", "airline", "bus", "taxi", "ride-sharing", "vans", "signage","highway","helicopters"
+    ];
+
+    const electricalKeywords = [
+        "electric", "lighting", "electrical", "electronics", "power", "energy", "wiring", "circuit", "appliance",
+        "generator", "transformer", "cable", "battery", "switchgear", "electronics", "scanners", "television",
+        "radio", "receivers", "video", "electricity", "power grid", "renewable energy", "solar", "wind", "audio"
+    ];
+
+    const retailKeywords = ["retail", "clothing", "footwear", "luggage", "accessories", "fashion"];
+
+    const hospitalityKeywords = ["food", "beverages", "tobacco", "restaurant", "hotel", "catering", "pub", "eating", "drink", "ice cream", "school meals", "cafeteria"];
+
+    const agricultureKeywords = ["agricultural", "forestry", "horticultural", "aquacultural", "apicultural", "farming", "tractors", "dairy"];
+
+    const printingKeywords = ["print", "Photocopiers", "newspapers", "newspaper", "journals", "magazines", "magasines", "periodicals", "book", "library"];
+
+    const foreignKeywords = ["foreign", "Foreign ", "foreign-affairs", "international", "embassy", "consulate", "diplomacy", "trade agreement", "global", "tractor"];
+
+    const staffingKeywords = ["staff", "personnel", "recruitment", "temporary", "employment agency"];
+
+    const legalKeywords = ["law", "court", "courts", "temporary", "employment agency", "justice", "judicial"];
+
+    const housingKeywords = ["housing", "surveying", "Renting", "leasing", "real estate"];
+
+    const translationKeywords = ["translation"];
+
+    const postKeywords = ["post", "postal", "courier"];
+
+    const socialServicesKeywords = ["welfare", "children", "playground", "social"];
+
+    const sportsKeywords = ["sports", "recreation", "leisure", "fitness", "gym", "athletic", "exercise", "recreational", "sport", "culture","bicycles", "cultural", "sporting", "recreational"];
+
+    const furnishingKeywords = ["furnished", "furniture", "furnishings", "interior design"];
+
+    const cleaningKeywords = ["cleaning", "sanitation", "hygiene", "janitorial", "clean"];
+
+    const securityKeywords = ["safety", "security", "fire doors", "firefighting", "surveillance", "fire", "extinguishers", "protective", "protective" ,"protection", "alarm", "Speed camera"];
+
+    const wasteKeywords = ["pest","pollution", "decontamination","refuse", "waste", "asbestos", "disposal", "hazardous", "recycling", "disposal","rubbish" , "bins", "incinerators", "toxic", "radioactive", "sewage", "contaminated", "cesspool","septic tank"]
+
+    const machineryKeywords =["pumps","x-ray","Photographic","spectrometer", "microscope", "armour plating", "instruments", "spray booths", "machine", "apparatus", "laboratory" , "mowers", "spectrometers", "analysers",  "centrifuges", "heating equipment", "navigational", "spotlights","appliances","generators"];
+
+    const financeKeywords = ["bank", "banking", "financial", "finance", "insurance", "pensions", "pension", "treasury", "investment" ];
+
+    const  energyKeywords = ["oil","gas","solar","wind","tidal","gas"]
+
+    const  advertisingKeywords = ["advertising ","marketing"]
+
+
+    if (animalKeywords.some(keyword => industry.includes(keyword))) {
+        return "Animals";
+    } else if (itKeywords.some(keyword => industry.includes(keyword))) {
+        return "IT and Technology";
+    } else if (healthKeywords.some(keyword => industry.includes(keyword))) {
+        return "Health and Social Care";
+    } else if (electricalKeywords.some(keyword => industry.includes(keyword))) {
+        return "Electrical and Electronics";
+    } else if (researchKeywords.some(keyword => industry.includes(keyword))) {
+        return "Research and Development";
+    } else if (transportKeywords.some(keyword => industry.includes(keyword))) {
+        return "Transport";
+    } else if (agricultureKeywords.some(keyword => industry.includes(keyword))) {
+        return "Agriculture";
+    } else if (hospitalityKeywords.some(keyword => industry.includes(keyword))) {
+        return "Hospitality";
+    } else if (advertisingKeywords.some(keyword => industry.includes(keyword))) {
+        return "Advertising and Marketing";        
+    } else if (retailKeywords.some(keyword => industry.includes(keyword))) {
+        return "Retail"
+    } else if (staffingKeywords.some(keyword => industry.includes(keyword))) {
+        return "Staffing and Recruitment";
+    } else if (foreignKeywords.some(keyword => industry.includes(keyword))) {
+        return "Foreign Affairs";
+    } else if (furnishingKeywords.some(keyword => industry.includes(keyword))) {
+        return "Furnishing";    
+    } else if (financeKeywords.some(keyword => industry.includes(keyword))) {
+        return "Finannce";
+    } else if (energyKeywords.some(keyword => industry.includes(keyword))) {
+        return "Energy";    
+    } else if (consultingKeywords.some(keyword => industry.includes(keyword))) {
+        return "Consultancy";
+    } else if (trainingKeywords.some(keyword => industry.includes(keyword))) {
+        return "Training";
+    } else if (constructionKeywords.some(keyword => industry.includes(keyword))) {
+        return "Construction and Engineering";
+    } else if (securityKeywords.some(keyword => industry.includes(keyword))) {
+        return "Safety and Security";
+    } else if (wasteKeywords.some(keyword => industry.includes(keyword))) {
+        return "Waste Management";
+    } else if (machineryKeywords.some(keyword => industry.includes(keyword))) {
+        return "Machinery and Equipment";
+    } else if (cleaningKeywords.some(keyword => industry.includes(keyword))) {
+        return "Cleaning";
+    } else if (printingKeywords.some(keyword => industry.includes(keyword))) {
+        return "Print Media";
+    } else if (legalKeywords.some(keyword => industry.includes(keyword))) {
+        return "Legal";
+    } else if (housingKeywords.some(keyword => industry.includes(keyword))) {
+        return "Housing";
+    } else if (translationKeywords.some(keyword => industry.includes(keyword))) {
+        return "Translation";
+    } else if (postKeywords.some(keyword => industry.includes(keyword))) {
+        return "Postal and Courier Services";
+    } else if (socialServicesKeywords.some(keyword => industry.includes(keyword))) {
+        return "Social Services";
+    } else if (sportsKeywords.some(keyword => industry.includes(keyword))) {
+        return "Sports and Recreation";
+    } else {
+        return normalizedIndustry || "unidentifiable";
+    }
+};
+
 // @ts-ignore
 function transformCsvRow(row) {
 
@@ -369,8 +529,16 @@ function transformCsvRow(row) {
         awardedValue = -1;
     }
 
-    const industry = row['industry'] ? row['industry'].split("-")[0]||"" : "unidentifiable"; 
-    let normalisedIndustry =  industry.replace(/\bservices\b/gi, '').trim().toLowerCase();
+    const category = normalizeIndustry(row['industry']);
+
+    const lastHyphenIndex = row['industry'].lastIndexOf("-"); // Find the last hyphen's index
+
+    const normalizedIndustry = lastHyphenIndex !== -1
+        ? row['industry'].substring(0, lastHyphenIndex).trim()  // Remove everything after the last hyphen
+        : row['industry']; // If no hyphen, keep the original string
+
+    const industry = normalizedIndustry.replace(/\bservices\b/gi, '').trim().toLowerCase();
+
     const link = row['link'] ? row['link'].split("?")[0] : "";
 
     const contract: contractNode = {
@@ -382,8 +550,9 @@ function transformCsvRow(row) {
         awardedDate: row['awardedDate'],
         awardedValue,
         issuedByParties: row['issuedByParties'].split(','),
-        category: row['category'],
-        industry: normalisedIndustry,
+        category: category,
+        industry: industry,
+        originalIndustry: row['industry'],
         link: link,
         location: row['location'],
     }
@@ -393,8 +562,8 @@ function transformCsvRow(row) {
     const namesArray = row['awardedTo'] ? row['awardedTo'].split(",") : ["unidentifiable"]
 
     //@ts-ignore
-    namesArray.forEach(i => contractsAwardedTo.push({ name: normalizeName(i) }) );
-    
+    namesArray.forEach(i => contractsAwardedTo.push({ name: normalizeName(i) }));
+
     return { contract, contractsAwardedTo }
 
 }
