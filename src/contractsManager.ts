@@ -361,7 +361,7 @@ const normalizeIndustry = (rawIndustry: string) => {
     const constructionKeywords = [
         "construction", "engineering", "building", "architectural", "refurbishment", "works", "installation", "concrete", "surfacing work", "painting", "landscaping ", "roof", "insulation",
         "infrastructure", "civil", "mechanical", "structural", "renovation", "maintenance", "repair", "excavating", "metalwork", "joinery", "tipper", "Decoration", "glazing", "ironmongery",
-        "scaffolding", "masonry", "brick", "skip", "hoists", "fencing"
+        "scaffolding", "masonry", "brick", "skip", "hoists", "fencing", "plastering", "floor-laying"
     ];
 
     const healthKeywords = [
@@ -387,7 +387,7 @@ const normalizeIndustry = (rawIndustry: string) => {
     const transportKeywords = [
         "aviation", "airport", "train", "car", "transport", "vehicle", "automotive", "railway", "air-charter", "traffic",
         "shipping", "maritime", "logistics", "freight", "trucking", "haulage", "delivery", "transit", "marine",
-        "transportation", "mobility", "shipping", "airline", "bus", "taxi", "ride-sharing", "vans", "signage", "highway", "helicopters"
+        "transportation", "mobility", "shipping", "airline", "bus", "taxi", "ride-sharing", "vans", "signage", "highway", "helicopters", "parking"
     ];
 
     const electricalKeywords = [
@@ -402,15 +402,15 @@ const normalizeIndustry = (rawIndustry: string) => {
 
     const agricultureKeywords = ["agricultural", "forestry", "horticultural", "aquacultural", "apicultural", "farming", "tractors", "dairy"];
 
-    const printingKeywords = ["print", "Photocopiers", "newspapers", "newspaper", "journals", "magazines", "magasines", "periodicals", "book", "library", "photographs", "photo"];
+    const printingKeywords = ["print", "photocopiers", "newspapers", "newspaper", "journals", "magazines", "magasines", "periodicals", "book", "library", "photographs", "photo"];
 
-    const foreignKeywords = ["foreign", "Foreign ", "foreign-affairs", "international", "embassy", "consulate", "diplomacy", "trade agreement", "global", "tractor"];
+    const foreignKeywords = ["foreign", "foreign-affairs", "international", "embassy", "consulate", "diplomacy", "trade agreement", "global", "tractor"];
 
     const staffingKeywords = ["staff", "personnel", "recruitment", "temporary", "employment agency"];
 
     const legalKeywords = ["law", "court", "courts", "temporary", "employment agency", "justice", "judicial"];
 
-    const housingKeywords = ["housing", "surveying", "Renting", "leasing", "real estate"];
+    const housingKeywords = ["housing", "surveying", "renting", "rent", "leasing", "real estate"];
 
     const translationKeywords = ["translation"];
 
@@ -424,22 +424,20 @@ const normalizeIndustry = (rawIndustry: string) => {
 
     const cleaningKeywords = ["cleaning", "sanitation", "hygiene", "janitorial", "clean"];
 
-    const securityKeywords = ["safety", "security", "fire doors", "firefighting", "surveillance", "fire", "extinguishers", "protective", "protective", "protection", "alarm", "Speed camera"];
+    const securityKeywords = ["safety", "security", "fire doors", "firefighting", "surveillance", "fire", "extinguishers", "protective", "protective", "protection", "alarm", "speed camera"];
 
     const wasteKeywords = ["pest", "pest-control", "pollution", "decontamination", "refuse", "waste", "asbestos", "disposal", "hazardous", "recycling", "disposal", "rubbish", "bins", "incinerators", "toxic", "radioactive", "sewage", "contaminated", "cesspool", "septic tank"]
 
     const machineryKeywords = ["equipment", "ventilation", "camera", "cameras", "phone", "pumps", "x-ray", "photographic", "spectrometer", "microscope", "armour plating", "instruments", "spray booths", "machine", "apparatus", "laboratory", "mowers", "spectrometers", "analysers", "centrifuges", "heating equipment", "navigational", "spotlights", "appliances", "generators"];
 
-    const financeKeywords = ["bank", "banking", "financial", "finance", "insurance", "pensions", "pension", "treasury", "investment"];
+    const financeKeywords = ["bank", "banking", "financial", "finance", "insurance", "pensions", "pension", "treasury", "investment", "Accounting"];
 
     const energyKeywords = ["oil", "gas", "solar", "wind", "tidal", "gas"]
 
     const advertisingKeywords = ["advertising ", "marketing"]
 
-    const officeKeywords = ["office", "chair", "desk"]
-
-    // officeSupplies
-
+    const officeKeywords = ["office", "chair", "desk", "stationery"]
+    
     if (animalKeywords.some(keyword => industry.includes(keyword))) {
         return "Animals";
     } else if (itKeywords.some(keyword => industry.includes(keyword))) {
