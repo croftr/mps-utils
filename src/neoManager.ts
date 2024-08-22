@@ -343,7 +343,7 @@ export const createContract = async (contractsAwardedTo: Array<contractAwardedTo
     MERGE (con:Contract { ContractId: $contractId })
     SET con.AwardedValue = $awardedValue,
         con.Title = $title,
-        con.Category = $category,
+        con.Categories = $categories,
         con.Description = $description,
         con.PublishedDate = date($publishedDate),
         con.AwardedDate = date($awardedDate),
@@ -365,7 +365,7 @@ export const createContract = async (contractsAwardedTo: Array<contractAwardedTo
         contractId: contract.id,
         title: contract.title,
         awardedValue: contract.awardedValue,
-        category: contract.category,
+        categories: contract.categories,
         description: contract.description,
         publishedDate: contract.publishedDate,
         awardedDate: contract.awardedDate,

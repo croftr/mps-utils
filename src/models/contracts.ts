@@ -45,7 +45,7 @@ export type contractNode = {
     awardedDate: string,
     awardedValue: number,    
     issuedByParties: Array<string>,
-    category: string|undefined,
+    categories: Array<string>,
     industry: string,
     link: string,
     location: string,
