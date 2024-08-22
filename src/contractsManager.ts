@@ -355,17 +355,18 @@ const normalizeIndustry = (rawIndustry: string) => {
 
     const itKeywords = [
         "it", "software", "computer", "data", "technical", "internet", "network", "hardware", "electronic",
-        "telecommunications", "system", "technology", "digital", "programming", "web", "cloud", "cybersecurity", "servers"
+        "telecommunications", "system", "technology", "digital", "programming", "web", "cloud", "cybersecurity", "servers", "fibre-optic"
     ];
 
     const constructionKeywords = [
         "construction", "engineering", "building", "architectural", "refurbishment", "works", "installation", "concrete", "surfacing work", "painting", "landscaping ", "roof", "insulation",
         "infrastructure", "civil", "mechanical", "structural", "renovation", "maintenance", "repair", "excavating", "metalwork", "joinery", "tipper", "Decoration", "glazing", "ironmongery",
-        "scaffolding", "masonry", "brick", "skip", "hoists", "fencing", "plastering", "floor-laying"
+        "scaffolding", "masonry", "brick", "skip", "hoists", "fencing", "plastering", "floor-laying", "landscape", "floor", "flooring", "plumbing", "decorating"
     ];
 
     const healthKeywords = [
-        "health", "social work", "medical", "healthcare", "hospital", "clinic", "pharmaceutical", "therapy", "wellness", "counselling"
+        "health", "social work", "medical", "healthcare", "hospital", "clinic", "pharmaceutical", "therapy", "wellness", "counselling", "pharmacy", "vaccine", "vaccines", "dental", "dentist", "psychiatrist", 
+        "psychologist", "ambulance", "orthopaedic"
     ];
 
     const researchKeywords = [
@@ -386,19 +387,21 @@ const normalizeIndustry = (rawIndustry: string) => {
 
     const transportKeywords = [
         "aviation", "airport", "train", "car", "transport", "vehicle", "automotive", "railway", "air-charter", "traffic",
-        "shipping", "maritime", "logistics", "freight", "trucking", "haulage", "delivery", "transit", "marine",
-        "transportation", "mobility", "shipping", "airline", "bus", "taxi", "ride-sharing", "vans", "signage", "highway", "helicopters", "parking"
+        "shipping", "maritime", "logistics", "freight", "trucking", "haulage", "delivery", "transit", "marine","ship", "ships",
+        "transportation", "mobility", "shipping", "airline", "bus", "taxi", "ride-sharing", "vans", "signage", "highway", "helicopters", "parking", "trucks", "truck", 
+        "road", "roads", "roundabouts", "roundabout"
     ];
 
     const electricalKeywords = [
         "electric", "lighting", "electrical", "electronics", "power", "energy", "wiring", "circuit", "appliance",
         "generator", "transformer", "cable", "battery", "switchgear", "electronics", "scanners", "television",
-        "radio", "receivers", "video", "electricity", "power grid", "renewable energy", "solar", "wind", "audio"
+        "radio", "receivers", "video", "electricity", "power grid", "renewable energy", "solar", "wind", "audio", "robot", "robots"
     ];
 
     const retailKeywords = ["retail", "clothing", "footwear", "luggage", "accessories", "fashion"];
 
-    const hospitalityKeywords = ["food", "beverages", "tobacco", "restaurant", "hotel", "catering", "pub", "eating", "drink", "ice cream", "school meals", "cafeteria", "pastry", "bread", "cake", "coffee", "tea", "meat"];
+    const hospitalityKeywords = ["food", "beverages", "tobacco", "restaurant", "hotel", "catering", "pub", "eating", "drink", "ice cream", "school meals", "cafeteria", "pastry", 
+        "bread", "cake", "coffee", "tea", "meat", "entertainment"];
 
     const agricultureKeywords = ["agricultural", "forestry", "horticultural", "aquacultural", "apicultural", "farming", "tractors", "dairy"];
 
@@ -408,95 +411,98 @@ const normalizeIndustry = (rawIndustry: string) => {
 
     const staffingKeywords = ["staff", "personnel", "recruitment", "temporary", "employment agency"];
 
-    const legalKeywords = ["law", "court", "courts", "temporary", "employment agency", "justice", "judicial"];
+    const legalKeywords = ["law", "court", "courts", "temporary", "employment agency", "justice", "judicial", "prison"];
 
-    const housingKeywords = ["housing", "surveying", "renting", "rent", "leasing", "real estate"];
+    const housingKeywords = ["housing", "surveying", "renting", "rent", "leasing", "real estate", "accommodation", "residential", "house", "survey"];
 
-    const translationKeywords = ["translation"];
+    const translationKeywords = ["translation", "Interpretation"];
 
-    const postKeywords = ["post", "postal", "courier"];
+    const postKeywords = ["post", "postal", "courier", "mailing", "mail"];
 
     const socialServicesKeywords = ["welfare", "children", "playground", "social"];
 
-    const sportsKeywords = ["sports", "recreation", "leisure", "fitness", "gym", "athletic", "exercise", "recreational", "sport", "culture", "bicycles", "cultural", "sporting", "recreational", "games", "toys"];
+    const sportsKeywords = ["sports", "recreation", "leisure", "fitness", "gym", "athletic", "exercise", "recreational", "sport", "culture", "bicycles", "cultural", "sporting", "recreational", "games", "toys", "artistic", "art"];
 
     const furnishingKeywords = ["furnished", "furniture", "furnishings", "interior design"];
 
     const cleaningKeywords = ["cleaning", "sanitation", "hygiene", "janitorial", "clean"];
 
-    const securityKeywords = ["safety", "security", "fire doors", "firefighting", "surveillance", "fire", "extinguishers", "protective", "protective", "protection", "alarm", "speed camera"];
+    const securityKeywords = ["defence", "safety", "security", "fire doors", "firefighting", "surveillance", "fire", "extinguishers", "protective", "protective", "protection", "alarm", "speed camera"];
 
-    const wasteKeywords = ["pest", "pest-control", "pollution", "decontamination", "refuse", "waste", "asbestos", "disposal", "hazardous", "recycling", "disposal", "rubbish", "bins", "incinerators", "toxic", "radioactive", "sewage", "contaminated", "cesspool", "septic tank"]
+    const wasteKeywords = ["weed", "weed-clearance", "chemical" ,"pest", "pest-control", "pollution", "decontamination", "refuse", "waste", 
+        "asbestos", "disposal", "hazardous", "recycling", "drainage",
+         "disposal", "rubbish", "bins", "incinerators", "toxic", "radioactive", "sewage", "contaminated", "cesspool", "septic tank"]
 
-    const machineryKeywords = ["equipment", "ventilation", "camera", "cameras", "phone", "pumps", "x-ray", "photographic", "spectrometer", "microscope", "armour plating", "instruments", "spray booths", "machine", "apparatus", "laboratory", "mowers", "spectrometers", "analysers", "centrifuges", "heating equipment", "navigational", "spotlights", "appliances", "generators"];
+    const machineryKeywords = ["sensors", "equipment", "ventilation", "camera", "cameras", "phone", "pumps", "x-ray", "photographic", "spectrometer", "microscope", "armour plating", "instruments", "spray booths", "machine", "apparatus", "laboratory", "mowers", "spectrometers", "analysers", "centrifuges", "heating equipment", "navigational", "spotlights", "appliances", "generators"];
 
-    const financeKeywords = ["bank", "banking", "financial", "finance", "insurance", "pensions", "pension", "treasury", "investment", "Accounting"];
+    const financeKeywords = ["economic", "bank", "banking", "financial", "finance", "insurance", "pensions", "pension", "treasury", "investment", "accounting"];
 
-    const energyKeywords = ["oil", "gas", "solar", "wind", "tidal", "gas"]
+    const energyKeywords = ["oil", "gas", "solar", "wind", "tidal", "gas"];
 
-    const advertisingKeywords = ["advertising ", "marketing"]
+    const advertisingKeywords = ["advertising ", "marketing"];
 
-    const officeKeywords = ["office", "chair", "desk", "stationery"]
+    const officeKeywords = ["office", "chair", "desk", "stationery"];
+
     
-    if (animalKeywords.some(keyword => industry.includes(keyword))) {
+    if (animalKeywords.some(keyword => new RegExp(`\\b${keyword.replace(/\s+/g, '\\s+')}\\b`).test(industry)))  {
         return "Animals";
-    } else if (itKeywords.some(keyword => industry.includes(keyword))) {
+    } else if (itKeywords.some(keyword => new RegExp(`\\b${keyword.replace(/\s+/g, '\\s+')}\\b`).test(industry)))  {
         return "IT and Technology";
-    } else if (healthKeywords.some(keyword => industry.includes(keyword))) {
+    } else if (healthKeywords.some(keyword => new RegExp(`\\b${keyword.replace(/\s+/g, '\\s+')}\\b`).test(industry)))  {
         return "Health and Social Care";
-    } else if (electricalKeywords.some(keyword => industry.includes(keyword))) {
+    } else if (electricalKeywords.some(keyword => new RegExp(`\\b${keyword.replace(/\s+/g, '\\s+')}\\b`).test(industry)))  {
         return "Electrical and Electronics";
-    } else if (researchKeywords.some(keyword => industry.includes(keyword))) {
+    } else if (researchKeywords.some(keyword => new RegExp(`\\b${keyword.replace(/\s+/g, '\\s+')}\\b`).test(industry)))  {
         return "Research and Development";
-    } else if (transportKeywords.some(keyword => industry.includes(keyword))) {
+    } else if (transportKeywords.some(keyword => new RegExp(`\\b${keyword.replace(/\s+/g, '\\s+')}\\b`).test(industry)))  {
         return "Transport";
-    } else if (agricultureKeywords.some(keyword => industry.includes(keyword))) {
+    } else if (agricultureKeywords.some(keyword => new RegExp(`\\b${keyword.replace(/\s+/g, '\\s+')}\\b`).test(industry)))  {
         return "Agriculture";
-    } else if (hospitalityKeywords.some(keyword => industry.includes(keyword))) {
+    } else if (hospitalityKeywords.some(keyword => new RegExp(`\\b${keyword.replace(/\s+/g, '\\s+')}\\b`).test(industry)))  {
         return "Hospitality";
-    } else if (advertisingKeywords.some(keyword => industry.includes(keyword))) {
+    } else if (advertisingKeywords.some(keyword => new RegExp(`\\b${keyword.replace(/\s+/g, '\\s+')}\\b`).test(industry)))  {
         return "Advertising and Marketing";
-    } else if (retailKeywords.some(keyword => industry.includes(keyword))) {
+    } else if (retailKeywords.some(keyword => new RegExp(`\\b${keyword.replace(/\s+/g, '\\s+')}\\b`).test(industry)))  {
         return "Retail"
-    } else if (staffingKeywords.some(keyword => industry.includes(keyword))) {
+    } else if (staffingKeywords.some(keyword => new RegExp(`\\b${keyword.replace(/\s+/g, '\\s+')}\\b`).test(industry)))  {
         return "Staffing and Recruitment";
-    } else if (foreignKeywords.some(keyword => industry.includes(keyword))) {
+    } else if (foreignKeywords.some(keyword => new RegExp(`\\b${keyword.replace(/\s+/g, '\\s+')}\\b`).test(industry)))  {
         return "Foreign Affairs";
-    } else if (furnishingKeywords.some(keyword => industry.includes(keyword))) {
+    } else if (furnishingKeywords.some(keyword => new RegExp(`\\b${keyword.replace(/\s+/g, '\\s+')}\\b`).test(industry)))  {
         return "Furnishing";
-    } else if (financeKeywords.some(keyword => industry.includes(keyword))) {
+    } else if (financeKeywords.some(keyword => new RegExp(`\\b${keyword.replace(/\s+/g, '\\s+')}\\b`).test(industry)))  {
         return "Finance";
-    } else if (energyKeywords.some(keyword => industry.includes(keyword))) {
+    } else if (energyKeywords.some(keyword => new RegExp(`\\b${keyword.replace(/\s+/g, '\\s+')}\\b`).test(industry)))  {
         return "Energy";
-    } else if (consultingKeywords.some(keyword => industry.includes(keyword))) {
+    } else if (consultingKeywords.some(keyword => new RegExp(`\\b${keyword.replace(/\s+/g, '\\s+')}\\b`).test(industry)))  {
         return "Consultancy";
-    } else if (trainingKeywords.some(keyword => industry.includes(keyword))) {
+    } else if (trainingKeywords.some(keyword => new RegExp(`\\b${keyword.replace(/\s+/g, '\\s+')}\\b`).test(industry)))  {
         return "Training";
-    } else if (constructionKeywords.some(keyword => industry.includes(keyword))) {
+    } else if (constructionKeywords.some(keyword => new RegExp(`\\b${keyword.replace(/\s+/g, '\\s+')}\\b`).test(industry)))  {
         return "Construction and Engineering";
-    } else if (securityKeywords.some(keyword => industry.includes(keyword))) {
+    } else if (securityKeywords.some(keyword => new RegExp(`\\b${keyword.replace(/\s+/g, '\\s+')}\\b`).test(industry)))  {
         return "Safety and Security";
-    } else if (wasteKeywords.some(keyword => industry.includes(keyword))) {
+    } else if (wasteKeywords.some(keyword => new RegExp(`\\b${keyword.replace(/\s+/g, '\\s+')}\\b`).test(industry)))  {
         return "Waste Management";
-    } else if (cleaningKeywords.some(keyword => industry.includes(keyword))) {
+    } else if (cleaningKeywords.some(keyword => new RegExp(`\\b${keyword.replace(/\s+/g, '\\s+')}\\b`).test(industry)))  {
         return "Cleaning";
-    } else if (printingKeywords.some(keyword => industry.includes(keyword))) {
+    } else if (printingKeywords.some(keyword => new RegExp(`\\b${keyword.replace(/\s+/g, '\\s+')}\\b`).test(industry)))  {
         return "Print Media";
-    } else if (legalKeywords.some(keyword => industry.includes(keyword))) {
+    } else if (legalKeywords.some(keyword => new RegExp(`\\b${keyword.replace(/\s+/g, '\\s+')}\\b`).test(industry)))  {
         return "Legal";
-    } else if (housingKeywords.some(keyword => industry.includes(keyword))) {
+    } else if (housingKeywords.some(keyword => new RegExp(`\\b${keyword.replace(/\s+/g, '\\s+')}\\b`).test(industry)))  {
         return "Housing";
-    } else if (translationKeywords.some(keyword => industry.includes(keyword))) {
+    } else if (translationKeywords.some(keyword => new RegExp(`\\b${keyword.replace(/\s+/g, '\\s+')}\\b`).test(industry)))  {
         return "Translation";
-    } else if (postKeywords.some(keyword => industry.includes(keyword))) {
+    } else if (postKeywords.some(keyword => new RegExp(`\\b${keyword.replace(/\s+/g, '\\s+')}\\b`).test(industry)))  {
         return "Postal and Courier Services";
-    } else if (socialServicesKeywords.some(keyword => industry.includes(keyword))) {
+    } else if (socialServicesKeywords.some(keyword => new RegExp(`\\b${keyword.replace(/\s+/g, '\\s+')}\\b`).test(industry)))  {
         return "Social Services";
-    } else if (sportsKeywords.some(keyword => industry.includes(keyword))) {        
+    } else if (sportsKeywords.some(keyword => new RegExp(`\\b${keyword.replace(/\s+/g, '\\s+')}\\b`).test(industry)))  {        
         return "Sports and Recreation";
-    } else if (officeKeywords.some(keyword => industry.includes(keyword))) {        
+    } else if (officeKeywords.some(keyword => new RegExp(`\\b${keyword.replace(/\s+/g, '\\s+')}\\b`).test(industry)))  {        
         return "Office supplies";
-    } else if (machineryKeywords.some(keyword => industry.includes(keyword))) {
+    } else if (machineryKeywords.some(keyword => new RegExp(`\\b${keyword.replace(/\s+/g, '\\s+')}\\b`).test(industry)))  {
         return "Machinery and Equipment";
     } else {
         return normalizedIndustry || "unidentifiable";
