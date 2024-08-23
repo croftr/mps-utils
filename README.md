@@ -1,3 +1,11 @@
+//contract category counts 
+MATCH (c:Contract)
+UNWIND c.Categories AS category 
+WITH category, COUNT(*) AS count
+WHERE count > 0
+RETURN category, count
+ORDER BY count DESC
+
 //orgs that donated to party that awarded them a contract
 MATCH (org:Organisation)-[:DONATED_TO]->(party:Party)-[:TENDERED]->(c:Contract)-[:AWARDED]->(org)
 RETURN org.Name AS organisation, party.partyName AS partyDnatedTo, c.Title AS contractRecieved LIMIT 5
