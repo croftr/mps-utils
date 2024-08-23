@@ -381,9 +381,7 @@ function transformCsvRow(row) {
     const industry = normalizedIndustry
         .replace(/(?:\bservices\b|\d+)/gi, "") // Remove "services" and digits
         .trim()
-        .toLowerCase();
-
-    console.log(industry); // Output: "it and consulting"
+        .toLowerCase();    
 
     const link = row['link'] ? row['link'].split("?")[0] : "";
 
