@@ -378,7 +378,10 @@ function transformCsvRow(row) {
         ? row['industry'].substring(0, lastHyphenIndex).trim()  // Remove everything after the last hyphen
         : row['industry']; // If no hyphen, keep the original string
 
-    const industry = normalizedIndustry.replace(/\bservices\b/gi, '').trim().toLowerCase();
+    const industry = normalizedIndustry
+        .replace(/\b(services|\d+)\b/gi, "") // Remove "services" and digits
+        .trim() // Remove leading/trailing spaces
+        .toLowerCase(); // Convert to lowercase
 
     const link = row['link'] ? row['link'].split("?")[0] : "";
 
