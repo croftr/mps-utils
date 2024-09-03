@@ -53,7 +53,6 @@ const go = async () => {
   const allMps: Array<Mp> = [];
 
   if (CREATE_MPS) {
-
   
     let neoCreateCount = 0;
     let skip = 0;
@@ -83,6 +82,8 @@ const go = async () => {
     await updateMpStatus(allMps.map(i => i.id));
 
     logger.debug(`Created ${neoCreateCount} MPs in Neo4j`);
+
+    await updateMetadata("mpsLastUpdate","now");
 
     // END timing
     endAndPrintTiming(timingStart, 'create mps');
