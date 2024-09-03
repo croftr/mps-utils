@@ -690,3 +690,27 @@ export const createVotedForDivision = async (votedFor: VotedFor) => {
     }
 
 }
+
+export const updateMetadata = async (key: string, value: string) => {
+    logger.info(`Updating metadata ${key} ${value}`);
+
+    let cypher;
+    let params = {}; 
+
+    if (value === "now") {
+        cypher = `MATCH (m:Metadata) SET m.${key} = datetime()`;
+    } else {
+        cypher = `MATCH (m:Metadata) SET m.${key} = $value`;         
+        //@ts-ignore
+        params.value = value; 
+    }
+
+    try {
+        const session = driver.session();
+        const result = await runCypherWithParams(cypher, session, params);
+    } catch (error: any) {
+        if (error.code !== "Neo.ClientError.Schema.ConstraintValidationFailed") {
+            logger.error(`Error adding to neo ${error}`);
+        }
+    }
+};

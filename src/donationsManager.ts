@@ -118,17 +118,28 @@ function csvRowToDonar(row: any, fromYear = 2001) {
 }
 
 /**
+ * LAST_RAN_DATE = 03/09/2024
+ * 
  * Download files from here search.electoralcommission.org.uk/English/Search/Donations
  * then set the dir to the location of the csv download. 
  * This will read the csv files and create nodes and rels in neo4j
+ * 
+ * 1) go here to search https://search.electoralcommission.org.uk/English/Search/Donations
+ * 2) enter the date range from {LAST_RAN_DATE} to today (Note this will query on the Reported Date field)
+ * 3) export results as CSV 
+ * 4) move the CSV into local ./donations dir
+ * 5) make sure the dir for this function is set to "./donations"
+ * 6) in .env set CREATE_DONATIONS=true
+ * 7) npm start 
+ * 
  * @param from 
  */
 export const createDonationsFromCsv = async (from = 2001) => {
 
     try {
 
-        const dir = 'D:/donations';
-        // const dir = 'D:/test';
+        // const dir = 'D:/donations';
+        const dir = './donations';
 
         const csvFiles: Array<string> = []
 

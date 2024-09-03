@@ -133,14 +133,17 @@ const extractContractId = (linkId: string) => {
  * the results are stored in csv files which can be added to neo running the createContracts function 
  * 
  * 1) query "Awarded contract" from here (https://www.contractsfinder.service.gov.uk/Search/Results) entering date range LAST_RUN_DATE -> TODAY in (Contract awarded date)
- * 2) in the dev tools console find the request that was made and grab the cookie
+ * 2) in the dev tools console find the request that was made and grab the cookie from the REQUEST HEADERS
  * 3) change the cookie 
+ * 4) empty the ./output dir as this is where the new contracts will go
+ * 5) set QUERY_CONTRACTS=true in .env 
+ * 5) npm start!
  * 
  */
 export const getContracts = async () => {
 
     //change cookie 
-    const cookie = "CF_COOKIES_PREFERENCES_SET=1; CF_AUTH=lolv50jhcl8uhbh9sfd2glsjc3; CF_PAGE_TIMEOUT=1724152494929";
+    const cookie = "CF_COOKIES_PREFERENCES_SET=1; CF_AUTH=hu5tsrb7109lrnakv4gqo1aml3; CF_PAGE_TIMEOUT=1725364091374";
 
     const ACCEPTED_ERROR_COUNT = 10
     let errorCount = 0;
@@ -279,8 +282,8 @@ export const getContracts = async () => {
 
 export const createContracts = async () => {
 
-    const csvDirectoryPath = 'D:/contracts';
-    // const csvDirectoryPath = './output';
+    // const csvDirectoryPath = 'D:/contracts';
+    const csvDirectoryPath = './output';
 
     const files = await fs.promises.readdir(csvDirectoryPath);
     // @ts-ignore

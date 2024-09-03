@@ -1,4 +1,4 @@
-import { setupDataScience, setupNeo, batchDelete, createMpNode, updateMpStatus } from "./src/neoManager";
+import { setupDataScience, setupNeo, batchDelete, createMpNode, updateMpStatus, updateMetadata } from "./src/neoManager";
 import { Mp } from "./src/models/mps";
 import { createParties } from "./src/nodeManager";
 import { createDonationsFromCsv } from "./src/donationsManager";
@@ -104,6 +104,7 @@ const go = async () => {
   if (CREATE_DONATIONS) {
     logger.info("CREATING DONATIONS")
     await createDonationsFromCsv(Number(process.env.DONATIONS_FROM_YEAR));
+    await updateMetadata("donationsLastUpdate","now")
     endAndPrintTiming(timingStart, 'created Donations');
   }
 
@@ -112,18 +113,17 @@ const go = async () => {
     await setupDataScience();
   }
 
-  if (CREATE_CONTRACTS) {
-    logger.info("CREATING CONTRACTS")
-    await createContracts(); //add contracts to databases
-    // await getContracts()   //get contracts from website
-    endAndPrintTiming(timingStart, 'create contracts');
-  }
-
   if (QUERY_CONTRACTS) {
     logger.info("QUERYING CONTRACTS")
-    await getContracts(); //add contracts to databases
-    // await getContracts()   //get contracts from website
+    await getContracts(); //add contracts to databases    
     endAndPrintTiming(timingStart, 'query contracts');
+  }
+
+  if (CREATE_CONTRACTS) {
+    logger.info("CREATING CONTRACTS")
+    await createContracts(); //add contracts to databases    
+    await updateMetadata("contractsLastUpdate","now")
+    endAndPrintTiming(timingStart, 'create contracts');
   }
   
   endAndPrintTiming(totalTimeStart, 'Everything complete');
