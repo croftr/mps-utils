@@ -22,13 +22,13 @@ const animalKeywords = [
     "dog", "horse", "animal", "veterinary", "pet", "livestock", "agriculture", "farming"
 ];
 const trainingKeywords = [
-    "training", "education", "learning", "development", "coaching", "instruction", "workshop", "seminar"
+    "training", "education", "learning", "development", "coaching", "instruction", "workshop", "seminar", "school"
 ];
 const transportKeywords = [
     "aviation", "airport", "train", "car", "transport", "vehicle", "automotive", "railway", "air-charter", "traffic",
     "shipping", "maritime", "logistics", "freight", "trucking", "haulage", "delivery", "transit", "marine", "ship", "ships",
     "transportation", "mobility", "shipping", "airline", "bus", "taxi", "ride-sharing", "vans", "signage", "highway", "helicopters", "parking", "trucks", "truck",
-    "road", "roads", "roundabouts", "roundabout", "bus", "coach", "trailer", "aircraft", "vehicle"
+    "road", "roads", "roundabouts", "roundabout", "bus", "coach", "trailer", "aircraft", "vehicle", "vehicles", "drive"
 ];
 const electricalKeywords = [
     "electric", "lighting", "electrical", "electronics", "power", "energy", "wiring", "circuit", "appliance", "simulators",
@@ -37,19 +37,19 @@ const electricalKeywords = [
 ];
 const retailKeywords = ["retail", "clothing", "footwear", "luggage", "accessories", "fashion"];
 const hospitalityKeywords = ["food", "beverages", "tobacco", "restaurant", "hotel", "catering", "pub", "eating", "drink", "ice cream", "school meals", "cafeteria", "pastry",
-    "bread", "cake", "coffee", "tea", "meat", "entertainment", "exhibition", "fruit", "event"];
+    "bread", "cake", "coffee", "tea", "meat", "entertainment", "exhibition", "fruit", "event", "floral"];
 const agricultureKeywords = ["agricultural", "forestry", "horticultural", "aquacultural", "apicultural", "farming", "tractors", "dairy", "trees", "forest", "plant"];
 const printingKeywords = ["print", "photocopier", "paper", "newspapers", "newspaper", "journals", "magazines", "magasines", "periodicals", "book", "library", "photographs", "photo", "printed", "printers", "printing", "publications", "textbook"];
 const foreignKeywords = ["language", "foreign", "foreign-affairs", "international", "embassy", "consulate", "diplomacy", "trade agreement", "global", "tractor"];
 const staffingKeywords = ["staff", "personnel", "recruitment", "temporary", "employment agency", "vetting", "interview"];
 const legalKeywords = ["law", "court", "courts", "temporary", "employment agency", "justice", "judicial", "prison", "crime", "rehabilitation", "police"];
-const housingKeywords = ["housing", "surveying", "renting", "rent", "leasing", "real estate", "accommodation", "residential", "house", "survey"];
+const housingKeywords = ["housing", "surveying", "renting", "rent", "leasing", "real estate", "accommodation", "residential", "house", "survey", "buildings", "building"];
 const translationKeywords = ["translation", "Interpretation"];
 const postKeywords = ["post", "postal", "courier", "mailing", "mail"];
 const socialServicesKeywords = ["welfare", "children", "playground", "social"];
 const sportsKeywords = ["sportswear", "sports", "recreation", "leisure", "fitness", "gym", "athletic", "exercise", "recreational", "sport", "culture", "bicycles", "cultural", "sporting", "recreational", "games", "toys", "artistic", "art", "graphic", "design"];
 const furnishingKeywords = ["furnished", "furniture", "furnishings", "interior design"];
-const cleaningKeywords = ["cleaning", "sanitation", "hygiene", "janitorial", "clean"];
+const cleaningKeywords = ["cleaning", "sanitation", "hygiene", "janitorial", "clean", "extraction", "ventalation", "laundry", "wash", "washing"];
 const securityKeywords = ["defence", "safety", "security", "fire doors", "firefighting", "surveillance", "fire", "extinguishers", "protective", "protective", "protection", "alarm", "speed camera", "fraud", "guard"];
 const wasteKeywords = ["weed", "weed-clearance", "chemical", "pest", "pest-control", "pollution", "decontamination", "refuse", "waste",
     "asbestos", "disposal", "hazardous", "recycling", "drainage",
