@@ -283,7 +283,8 @@ export const getContracts = async () => {
 export const createContracts = async () => {
 
     // const csvDirectoryPath = 'D:/contracts';
-    const csvDirectoryPath = './output';
+    // const csvDirectoryPath = './output';
+    const csvDirectoryPath = './test';
 
     const files = await fs.promises.readdir(csvDirectoryPath);
     // @ts-ignore
@@ -373,7 +374,7 @@ function transformCsvRow(row) {
         awardedValue = -1;
     }
 
-    const categories = normalizeIndustry(row['industry']);
+    const categories = normalizeIndustry(row['industry']);    
 
     const lastHyphenIndex = row['industry'].lastIndexOf("-"); // Find the last hyphen's index
 
@@ -423,7 +424,7 @@ async function createContractsInNeo4j(contracts) {
     const session = driver.session();
     try {
         for (const item of contracts) {
-            await createContract(item.contractsAwardedTo, item.contract, session);
+            // await createContract(item.contractsAwardedTo, item.contract, session);
         }
         logger.info(`Created ${contracts.length} contracts in neo`)
         // TODO 1 second delate here is it necessary?

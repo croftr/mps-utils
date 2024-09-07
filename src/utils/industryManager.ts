@@ -10,7 +10,7 @@ const constructionKeywords = [
 ];
 const healthKeywords = [
     "health", "social work", "medical", "healthcare", "hospital", "clinic", "pharmaceutical", "therapy", "wellness", "counselling", "pharmacy", "vaccine", "vaccines", "dental", "dentist", "psychiatrist",
-    "psychologist", "ambulance", "orthopaedic", "laboratory", "paramedical", "paramedic", "physiotherapy", "surgical", "vitamin", "sandwiches", "sandwich"
+    "psychologist", "ambulance", "orthopaedic", "laboratory", "paramedical", "paramedic", "physiotherapy", "surgical", "vitamin", "sandwiches", "sandwich", "x-ray"
 ];
 const researchKeywords = [
     "development", "research", "innovation", "laboratory", "scientific", "experiment", "study", "analysis", "investigation"
@@ -40,7 +40,7 @@ const hospitalityKeywords = ["food", "beverages", "tobacco", "restaurant", "hote
     "bread", "cake", "coffee", "tea", "meat", "entertainment", "exhibition", "fruit", "event"];
 const agricultureKeywords = ["agricultural", "forestry", "horticultural", "aquacultural", "apicultural", "farming", "tractors", "dairy", "trees", "forest", "plant"];
 const printingKeywords = ["print", "photocopier", "paper", "newspapers", "newspaper", "journals", "magazines", "magasines", "periodicals", "book", "library", "photographs", "photo", "printed", "printers", "printing", "publications", "textbook"];
-const foreignKeywords = ["language","foreign", "foreign-affairs", "international", "embassy", "consulate", "diplomacy", "trade agreement", "global", "tractor"];
+const foreignKeywords = ["language", "foreign", "foreign-affairs", "international", "embassy", "consulate", "diplomacy", "trade agreement", "global", "tractor"];
 const staffingKeywords = ["staff", "personnel", "recruitment", "temporary", "employment agency", "vetting", "interview"];
 const legalKeywords = ["law", "court", "courts", "temporary", "employment agency", "justice", "judicial", "prison", "crime", "rehabilitation", "police"];
 const housingKeywords = ["housing", "surveying", "renting", "rent", "leasing", "real estate", "accommodation", "residential", "house", "survey"];
@@ -54,12 +54,12 @@ const securityKeywords = ["defence", "safety", "security", "fire doors", "firefi
 const wasteKeywords = ["weed", "weed-clearance", "chemical", "pest", "pest-control", "pollution", "decontamination", "refuse", "waste",
     "asbestos", "disposal", "hazardous", "recycling", "drainage",
     "disposal", "rubbish", "bins", "incinerators", "toxic", "radioactive", "sewage", "contaminated", "cesspool", "septic tank"]
-const machineryKeywords = ["sensors", "equipment", "ventilation", "camera", "cameras", "pumps", "x-ray", "photographic", "spectrometer", "freezers","microscope", "armour plating", "instruments", "spray booths", "machine", "machinery", "apparatus", "laboratory", "mowers", "spectrometers", "analysers", "centrifuges", "heating equipment", "navigational", "spotlights", "appliances", "generators"];
+const machineryKeywords = ["sensors", "equipment", "ventilation", "camera", "cameras", "pumps", "x-ray", "photographic", "spectrometer", "freezers", "microscope", "armour plating", "instruments", "spray booths", "machine", "machinery", "apparatus", "laboratory", "mowers", "spectrometers", "analysers", "centrifuges", "heating equipment", "navigational", "spotlights", "appliances", "generators"];
 const financeKeywords = ["economic", "bank", "banking", "financial", "finance", "insurance", "pensions", "pension", "treasury", "investment", "accounting"];
 const energyKeywords = ["oil", "gas", "solar", "wind", "tidal", "gas", "energy", "petroleum", "fuel", "electricity", "gas"];
 const advertisingKeywords = ["advertising ", "marketing"];
 const officeKeywords = ["office", "chair", "desk", "stationery", "monitor"];
-const telecommunicationsKeywords = ["telephone", "phone", "wireless", "internet", "wifi", "wi-fi", "internet", "isp", "satellite", "cable", "wireless", "television", "broadband", "network", "satellite", 
+const telecommunicationsKeywords = ["telephone", "phone", "wireless", "internet", "wifi", "wi-fi", "internet", "isp", "satellite", "cable", "wireless", "television", "broadband", "network", "satellite",
     "call center", "call centre", "router", "data center", "switches", "telecommunication", "5g", "4g", "3g", "iot", "sms", "telephone-answering"]
 
 const keywordCategories = [
@@ -96,15 +96,19 @@ const keywordCategories = [
     { keywords: telecommunicationsKeywords, category: "Telecommunications" },
 ];
 
-export const normalizeIndustry = (rawIndustry: string): string[] => { 
+export const normalizeIndustry = (rawIndustry: string): string[] => {
+    
 
     if (!rawIndustry) return ["unidentifiable"];
-
+  
     const lastHyphenIndex = rawIndustry.lastIndexOf("-");
+    
+    // Only trim the part before the last hyphen, if it exists
     const normalizedIndustry = lastHyphenIndex !== -1
-        ? rawIndustry.substring(0, lastHyphenIndex).trim()
-        : rawIndustry;
-    const industry = normalizedIndustry.trim().toLowerCase();
+      ? rawIndustry.substring(0, lastHyphenIndex).trim() 
+      : rawIndustry;
+    
+    const industry = normalizedIndustry.toLowerCase(); 
 
     const matchedCategories = [];
 
@@ -113,15 +117,12 @@ export const normalizeIndustry = (rawIndustry: string): string[] => {
             matchedCategories.push(category);
         }
     }
-
-    // for (const { keywords, category } of keywordCategories) {
-    //     const pluralKeywords = keywords.map(keyword => keyword + 's');
-    //     const allKeywords = [...keywords, ...pluralKeywords];
-
-    //     if (allKeywords.some((keyword) => new RegExp(`\\b${keyword.replace(/\s+/g, '\\s+')}\\b`).test(industry))) {
-    //         matchedCategories.push(category);
-    //     }
-    // }
-
-    return matchedCategories.length > 0 ? matchedCategories : [industry || "other"];
+    
+    if (matchedCategories.length > 0) {
+        return matchedCategories
+    } else {
+        const industryWithSpaces = industry.replace(/\d/g, ''); // Replace digits with a space
+        return [industryWithSpaces];
+    }
+    
 };
