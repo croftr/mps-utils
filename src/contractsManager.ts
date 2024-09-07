@@ -143,7 +143,7 @@ const extractContractId = (linkId: string) => {
 export const getContracts = async () => {
 
     //change cookie 
-    const cookie = "CF_COOKIES_PREFERENCES_SET=1; CF_AUTH=hu5tsrb7109lrnakv4gqo1aml3; CF_PAGE_TIMEOUT=1725364091374";
+    const cookie = "CF_COOKIES_PREFERENCES_SET=1; CF_AUTH=vub6b11vf81q3inopsgug73vh2; CF_PAGE_TIMEOUT=1725721715459";
 
     const ACCEPTED_ERROR_COUNT = 10
     let errorCount = 0;

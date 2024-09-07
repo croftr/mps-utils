@@ -114,13 +114,22 @@ const go = async () => {
     await setupDataScience();
   }
 
+  //if you set query and create to true it will automatically create the contracts when the query is done 
   if (QUERY_CONTRACTS) {
     logger.info("QUERYING CONTRACTS")
     await getContracts(); //add contracts to databases    
     endAndPrintTiming(timingStart, 'query contracts');
+
+    if (CREATE_CONTRACTS) {
+      logger.info("CREATING CONTRACTS")
+      await createContracts(); //add contracts to databases    
+      await updateMetadata("contractsLastUpdate","now")
+      endAndPrintTiming(timingStart, 'create contracts');
+    }
   }
 
-  if (CREATE_CONTRACTS) {
+  //just create contract from a previous query 
+  if (!QUERY_CONTRACTS && CREATE_CONTRACTS) {
     logger.info("CREATING CONTRACTS")
     await createContracts(); //add contracts to databases    
     await updateMetadata("contractsLastUpdate","now")
