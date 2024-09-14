@@ -9,11 +9,13 @@ const constructionKeywords = [
     "scaffolding", "masonry", "brick", "skip", "hoists", "fencing", "plastering", "floor-laying", "landscape", "floor", "flooring", "plumbing", "decorating", "window", "door", "roofing", "demolition", "tarmac", "installations"
 ];
 const healthKeywords = [
-    "health", "social work", "medical", "healthcare", "hospital", "clinic", "pharmaceutical", "therapy", "wellness", "counselling", "pharmacy", "vaccine", "vaccines", "dental", "dentist", "psychiatrist", "diagnostic", "incubator", "incubators",
-    "psychologist", "ambulance", "orthopaedic", "laboratory", "paramedical", "paramedic", "physiotherapy", "surgical", "vitamin", "sandwiches", "sandwich", "x-ray", "cardiac", "incubator", "clinical", "pathology", "endoscopy"
+    "health", "social work", "medical", "healthcare", "hospital", "clinic", "pharmaceutical", "therapy", "wellness", "counselling", 
+    "pharmacy", "vaccine", "vaccines", "dental", "dentist", "psychiatrist", "diagnostic", "incubator", "incubators", "diagnostic", "spectroscopy",
+    "psychologist", "ambulance", "orthopaedic", "laboratory", "paramedical", "paramedic", "physiotherapy", "surgical", "vitamin", "sandwiches", "sandwich", 
+    "x-ray", "cardiac", "incubator", "clinical", "pathology", "endoscopy", "endoscope", "optician"
 ];
 const researchKeywords = [
-    "development", "research", "innovation", "laboratory", "scientific", "experiment", "study", "analysis", "investigation", "microscope", "microscopes"
+    "development", "research", "innovation", "laboratory", "scientific", "experiment", "study", "analysis", "investigation", "microscope", "microscopes", "evaluation"
 ];
 const consultingKeywords = [
     "consult", "advisory", "consulting", "advice", "guidance", "strategy", "planning", "management", "consultancy"
@@ -22,10 +24,10 @@ const animalKeywords = [
     "dog", "horse", "animal", "veterinary", "pet", "livestock", "agriculture", "farming"
 ];
 const trainingKeywords = [
-    "training", "education", "learning", "development", "coaching", "instruction", "workshop", "seminar", "school", "textbooks"
+    "training", "education", "learning", "development", "coaching", "instruction", "workshop", "seminar", "school", "textbooks", "educational"
 ];
 const transportKeywords = [
-    "aviation", "airport", "train", "car", "transport", "vehicle", "automotive", "railway", "air-charter", "traffic", "highways", "cars", "travel",
+    "aviation", "airport", "train", "car", "transport", "vehicle", "automotive", "railway", "air-charter", "traffic", "highways", "cars", "travel", "lifts",
     "shipping", "maritime", "logistics", "freight", "trucking", "haulage", "delivery", "transit", "marine", "ship", "ships", "minibuses", "trailers",
     "transportation", "mobility", "shipping", "airline", "bus", "taxi", "ride-sharing", "vans", "signage", "highway", "helicopters", "parking", "trucks", "truck",
     "road", "roads", "roundabouts", "roundabout", "bus", "coach", "trailer", "aircraft", "vehicle", "vehicles", "drive", "buses", "coaches", "driver", "signalling"
@@ -51,13 +53,14 @@ const socialServicesKeywords = ["welfare", "children", "playground", "social", "
 const sportsKeywords = ["sportswear", "sports", "recreation", "leisure", "fitness", "gym", "athletic", "exercise", "recreational", "sport", "culture", "bicycles", "cultural", "sporting", "recreational", "games", "toys", "artistic", "art", "graphic", "design"];
 const furnishingKeywords = ["furnished", "furniture", "furnishings", "interior design"];
 const cleaningKeywords = ["cleaning", "sanitation", "hygiene", "janitorial", "clean", "extraction", "ventalation", "laundry", "wash", "washing"];
-const securityKeywords = ["defence", "safety", "security", "fire doors", "firefighting", "surveillance", "fire", "extinguishers", "protective", "protective", "protection", "alarm", "speed camera", "fraud", "guard", "weapons"];
+const securityKeywords = ["defence", "safety", "security", "fire doors", "firefighting", "surveillance", "fire", "extinguishers", "protective", "protective", "protection", "alarm", "speed camera", 
+    "fraud", "guard", "weapons", "warships", "fireproofing"];
 const wasteKeywords = ["weed", "weed-clearance", "chemical", "pest", "pest-control", "pollution", "decontamination", "refuse", "waste",
     "asbestos", "disposal", "hazardous", "recycling", "drainage", "water-treatment",
     "disposal", "rubbish", "bins", "incinerators", "toxic", "radioactive", "sewage", "contaminated", "cesspool", "septic tank"]
 const machineryKeywords = ["sensors", "equipment", "ventilation", "camera", "cameras", "pumps", "x-ray", "photographic", "spectrometer", "freezers", "microscope", "armour plating", "instruments", "spray booths", "machine", "machinery", "apparatus", "laboratory", "mowers", "spectrometers", "analysers", "centrifuges", "heating equipment", "navigational", "spotlights", "appliances", "generators"];
 const financeKeywords = ["economic", "bank", "banking", "financial", "finance", "insurance", "pensions", "pension", "treasury", "investment", "accounting", "auditing", "audit" ];
-const energyKeywords = ["oil", "gas", "solar", "wind", "tidal", "gas", "energy", "petroleum", "fuel", "electricity", "gas", "fuels", "fuel", "petrol", "oils", "gases"];
+const energyKeywords = ["oil", "gas", "solar", "wind", "tidal", "gas", "energy", "petroleum", "fuel", "electricity", "gas", "fuels", "fuel", "petrol", "oils", "gases", "nitrogen"];
 const advertisingKeywords = ["advertising ", "marketing", "public relations"];
 const officeKeywords = ["office", "chair", "desk", "stationery", "monitor"];
 const telecommunicationsKeywords = ["telephone", "phone", "wireless", "internet", "wifi", "wi-fi", "internet", "isp", "satellite", "cable", "wireless", "television", "broadband", "network", "satellite",
