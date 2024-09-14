@@ -72,7 +72,7 @@ const writeCsv = async (data: Array<any>, pageNumber: number) => {
 
     const fromPage = pageNumber - CSV_SIZE;
     const outputDir = 'output'; // Set the output directory name
-    const filename = `contracts_b_2024${fromPage}_${pageNumber}.csv`
+    const filename = `contracts_d_2024${fromPage}_${pageNumber}.csv`
     const filePath = path.join(outputDir, filename);
 
     const csvStream = stringify({ header: true, columns: COLUMNS });
@@ -124,26 +124,27 @@ const extractContractId = (linkId: string) => {
     return contractId;
 }
 
-
 /**
- * LAST_RUN_DATE=17/08/2024
+ * LAST_RUN_DATE=13/09/2024
  * 
  * This scrapes search results from the html page after a manual query. 
  * its very painful but there is no api and the cscv dowlonad cant download more than 100 recordss
  * the results are stored in csv files which can be added to neo running the createContracts function 
  * 
- * 1) query "Awarded contract" from here (https://www.contractsfinder.service.gov.uk/Search/Results) entering date range LAST_RUN_DATE -> TODAY in (Contract awarded date)
+ * 1) query "Awarded contract" from here (https://www.contractsfinder.service.gov.uk/Search/Results) entering date range (LAST_RUN_DATE +1) -> TODAY in (Contract awarded date)
  * 2) in the dev tools console find the request that was made and grab the cookie from the REQUEST HEADERS
  * 3) change the cookie 
  * 4) empty the ./output dir as this is where the new contracts will go
+ * 5) make sure the csvDirectoryPath is set to ./outputs
  * 5) set QUERY_CONTRACTS=true in .env 
- * 5) npm start!
+ * 6) change the filename (line 75)
+ * 7) npm start!
  * 
  */
 export const getContracts = async () => {
 
     //change cookie 
-    const cookie = "CF_COOKIES_PREFERENCES_SET=1; CF_AUTH=vub6b11vf81q3inopsgug73vh2; CF_PAGE_TIMEOUT=1725721715459";
+    const cookie = "CF_COOKIES_PREFERENCES_SET=1; CF_AUTH=st2br9urpkpded4k84ql2jo5i3; CF_PAGE_TIMEOUT=1726250018111";
 
     const ACCEPTED_ERROR_COUNT = 10
     let errorCount = 0;
@@ -282,9 +283,9 @@ export const getContracts = async () => {
 
 export const createContracts = async () => {
 
-    // const csvDirectoryPath = 'D:/contracts';
+    const csvDirectoryPath = 'D:/contracts';
     // const csvDirectoryPath = './output';
-    const csvDirectoryPath = './test';
+    // const csvDirectoryPath = './test';
 
     const files = await fs.promises.readdir(csvDirectoryPath);
     // @ts-ignore
@@ -424,7 +425,7 @@ async function createContractsInNeo4j(contracts) {
     const session = driver.session();
     try {
         for (const item of contracts) {
-            // await createContract(item.contractsAwardedTo, item.contract, session);
+            await createContract(item.contractsAwardedTo, item.contract, session);
         }
         logger.info(`Created ${contracts.length} contracts in neo`)
         // TODO 1 second delate here is it necessary?

@@ -118,7 +118,7 @@ function csvRowToDonar(row: any, fromYear = 2001) {
 }
 
 /**
- * LAST_RAN_DATE = 03/09/2024
+ * LAST_RAN_DATE = 13/09/2024
  * 
  * Download files from here search.electoralcommission.org.uk/English/Search/Donations
  * then set the dir to the location of the csv download. 
