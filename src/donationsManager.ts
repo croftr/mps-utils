@@ -118,6 +118,7 @@ function csvRowToDonar(row: any, fromYear = 2001) {
 }
 
 /**
+ * * **** UPDATING DONATIONS *****
  * LAST_RAN_DATE = 13/09/2024
  * 
  * Download files from here search.electoralcommission.org.uk/English/Search/Donations
@@ -131,6 +132,12 @@ function csvRowToDonar(row: any, fromYear = 2001) {
  * 5) make sure the dir for this function is set to "./donations"
  * 6) in .env set CREATE_DONATIONS=true
  * 7) npm start 
+ * 8) add the newly downlaoded donation csv file to D:/donations folder
+ * 
+ * * **** RECREATE ALL  DONATIONS *****
+ * 1) make sure the dir for this function is set to D:/donations
+ * 2) in .env set CREATE_DONATIONS=true
+ * 3) npm start 
  * 
  * @param from 
  */
@@ -138,8 +145,8 @@ export const createDonationsFromCsv = async (from = 2001) => {
 
     try {
 
-        // const dir = 'D:/donations';
-        const dir = './donations';
+        const dir = 'D:/donations';
+        // const dir = './donations';
 
         const csvFiles: Array<string> = []
 
