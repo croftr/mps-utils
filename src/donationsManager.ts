@@ -145,8 +145,8 @@ export const createDonationsFromCsv = async (from = 2001) => {
 
     try {
 
-        const dir = 'D:/donations';
-        // const dir = './donations';
+        // const dir = 'D:/donations';
+        const dir = './donations';
 
         const csvFiles: Array<string> = []
 
